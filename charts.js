@@ -99,6 +99,7 @@ function ladder(host,levels,cur){
 
 /* ---------- main ---------- */
 const STRIP=s=>String(s||"").replace(/<[^>]+>/g,"");
+window.lineChart=lineChart;
 window.renderCharts=async function(main,IDX,getJSON,cache){
   main.innerHTML=`<div class="empty">正在汇总 ${IDX.days.length} 天的数据…</div>`;
   const days=[...IDX.days].sort((a,b)=>a.date.localeCompare(b.date));

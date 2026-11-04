@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>超级鹿鼎公微博汇总</title>
+<meta name="description" content="挖地瓜的超级鹿鼎公 微博每日整理：持仓、电解铝、煤炭、黄金的观点和价位，实时对比他说的建仓/加仓价。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="超级鹿鼎公微博汇总">
+<meta property="og:description" content="每日整理他的微博要点、持仓变化和关键价位，股价实时对比，还能匿名留言。">
+<meta property="og:url" content="https://ludinggongfans.netlify.app/">
+<meta property="og:image" content="https://ludinggongfans.netlify.app/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta itemprop="name" content="超级鹿鼎公微博汇总"><meta itemprop="image" content="https://ludinggongfans.netlify.app/og.png">
+<link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
 <style>
 :root{--bg:#f7f5f1;--card:#fff;--ink:#1f1f1f;--mute:#8a8580;--line:#e6e1d9;--red:#d00;--soft:#fbeeee;--chip:#efebe5}
 @media (prefers-color-scheme:dark){:root{--bg:#141414;--card:#1e1e1e;--ink:#e9e9e9;--mute:#9a9a9a;--line:#323232;--red:#ff4d4d;--soft:#2b1b1b;--chip:#2a2a2a}}
@@ -200,6 +210,7 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 </style>
 </head>
 <body>
+<div style="display:none"><img src="og.png" alt="超级鹿鼎公微博汇总"></div>
 <div class="wrap">
 <header>
 <h1>超级鹿鼎公微博汇总</h1>
@@ -215,7 +226,7 @@ const CHAT="闲聊";
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 // allow only <b> tags from data
 const rich=s=>esc(s).replace(/&lt;(\/?)b&gt;/g,"<$1b>");
-const link=b=>`https://weibo.com/3962719063/${b}`;
+const link=(b,src)=>src==="xq"?`https://xueqiu.com/8790885129/${b}`:`https://weibo.com/3962719063/${b}`;
 let IDX=null, cache={}, cur=null;
 
 async function getJSON(p){const r=await fetch(p,{cache:"no-cache"});if(!r.ok)throw new Error(p);return r.json();}
@@ -242,7 +253,7 @@ function weeksHTML(){
 function postHTML(p){
   const reply=!!p.q;
   return `<div class="post${reply?" reply":""}${p.buy?" buy":""}">
-    <div class="meta"><span>${esc(p.t)}${p.buy?` <span class="buy-tag">🎯 想买/加仓</span>`:""}</span><a href="${link(p.b)}" target="_blank" rel="noopener">原文</a></div>
+    <div class="meta"><span>${esc(p.t)}${p.s==="xq"?` <span class="buy-tag" style="background:#2f6fd6">雪球</span>`:""}${p.buy?` <span class="buy-tag">🎯 想买/加仓</span>`:""}</span><a href="${link(p.b,p.s)}" target="_blank" rel="noopener">原文</a></div>
     ${reply?`<div class="q">${rich(p.q)}</div>`:""}
     <div class="x">${rich(p.x)}</div>
     ${p.src?`<div class="src"><em>${esc(p.src.u)}：</em>${rich(p.src.x)}</div>`:""}
@@ -272,7 +283,7 @@ function trackHTML(){
   const sel=window.__asset||"全部";
   let rows=IDX.tracker.filter(r=>sel==="全部"||r.a===sel).sort((a,b)=>a.a===b.a?b.d.localeCompare(a.d):assets.indexOf(a.a)-assets.indexOf(b.a));
   const rb=(IDX.charts&&IDX.charts.rebal)?`<section class="box viz-root"><h2>10月仓位推算 <small>${IDX.charts.rebal.from} 持仓截图 → ${IDX.charts.rebal.to} 月度总结（估算）</small></h2><div id="rebal"></div></section>`:"";
-  return `<div id="lvl"></div>`+(window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
+  return `<div id="lvl"></div><div id="rv"></div>`+(window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
   <div class="chips">${["全部",...assets].map(a=>`<button data-a="${esc(a)}" class="${a===sel?"on":""}">${esc(a)}</button>`).join("")}</div>
   <table>${rows.map((r,i)=>`<tr><td class="a">${i>0&&rows[i-1].a===r.a?"":esc(r.a)}</td><td class="d">${r.d.slice(5)}</td><td>${rich(r.x)}<a href="${link(r.b)}" target="_blank" rel="noopener">原文</a></td></tr>`).join("")}</table></section>`;
 }
@@ -282,9 +293,9 @@ async function go(v){
   const m=document.getElementById("main");
   const h=["track","weeks","charts","mind","ps"].includes(v)?v:"d"+v.replace(/-/g,"");
   try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
-  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
+  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(window.renderReview)window.renderReview(m.querySelector("#rv"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
-  if(v==="charts"){window.renderCharts(m,IDX,getJSON,cache);return;}
+  if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
   if(v==="ps"){window.renderPS(m,getJSON);return;}
   m.innerHTML=daybar(v)+`<div class="empty">加载中…</div>`; wireDaybar(v);
@@ -301,12 +312,14 @@ async function go(v){
   let start="charts";
   if(["track","weeks","charts","mind","ps"].includes(h))start=h;
   else if(/^d\d{8}$/.test(h)){const d=h.slice(1,5)+"-"+h.slice(5,7)+"-"+h.slice(7);if(IDX.days.some(x=>x.date===d))start=d;}
+  if(/^s=/.test(h)&&window.doSearch){window.doSearch(decodeURIComponent(h.slice(2)));return;}
   go(start);
 })();
 </script>
 <script src="charts.js"></script>
 <script src="visual.js"></script>
 <script src="ps.js"></script>
+<script src="extra.js"></script>
 <script src="levels.js"></script>
 <script src="talk.js"></script>
 </body>

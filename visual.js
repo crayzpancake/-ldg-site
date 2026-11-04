@@ -3,7 +3,7 @@
 const STRIP=s=>String(s||"").replace(/<[^>]+>/g,"");
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const rich=s=>esc(s).replace(/&lt;(\/?)b&gt;/g,"<$1b>");
-const link=b=>`https://weibo.com/3962719063/${b}`;
+const link=(b,src)=>src==="xq"?`https://xueqiu.com/8790885129/${b}`:`https://weibo.com/3962719063/${b}`;
 // 固定分类→颜色（颜色跟着分类走，不随排名变）
 const CAT_COLOR={"电解铝":1,"煤炭":2,"持仓与收益":3,"黄金白银":4,"利率与宏观":5,"市场与大盘":6,"方法论":7,"水电":8};
 const colorOf=c=>CAT_COLOR[c]?`var(--c${CAT_COLOR[c]})`:(c==="闲聊"?"var(--s0)":"var(--c0)");
@@ -43,7 +43,7 @@ window.renderInfographic=function(D){
    ${D.posts.some(p=>p.buy)?`<div class="ig-sec" style="color:var(--red)">🎯 想买 / 想加仓</div>${D.posts.filter(p=>p.buy).map(p=>`<div class="ig-card" style="--k:var(--red);background:var(--soft)"><div class="ig-num">🎯</div><div>${p.q?`<div class="ig-tag">${rich(p.q)}</div>`:""}<div class="ig-txt">${rich(p.x)}</div></div></div>`).join("")}`:""}
    <div class="ig-sec">今日要点</div>
    <div class="ig-cards">${hls.map((h,i)=>`<div class="ig-card" style="--k:${h.c?colorOf(h.c):"var(--red)"}"><div class="ig-num">${i+1}</div><div>${h.c?`<div class="ig-tag">${ICON[h.c]||""} ${esc(h.c)}</div>`:""}<div class="ig-txt">${rich(h.x)}</div></div></div>`).join("")}</div>
-   ${qa.length?`<div class="ig-sec">网友问 · 他答</div>${qa.map(p=>`<div class="ig-qa"><div class="ig-q">${rich(p.q)}</div><div class="ig-a">${rich(p.x)}</div><a href="${link(p.b)}" target="_blank" rel="noopener">原文</a></div>`).join("")}`:""}
+   ${qa.length?`<div class="ig-sec">网友问 · 他答</div>${qa.map(p=>`<div class="ig-qa"><div class="ig-q">${rich(p.q)}</div><div class="ig-a">${rich(p.x)}</div><a href="${link(p.b,p.s)}" target="_blank" rel="noopener">原文</a></div>`).join("")}`:""}
   </div>`;
 };
 
