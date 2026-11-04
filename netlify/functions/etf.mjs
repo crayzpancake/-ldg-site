@@ -8,8 +8,20 @@ async function sse(date) {
   let j; try { j = JSON.parse(t.replace(/^[^{]*\(/, "").replace(/\)\s*$/, "")); } catch (e) { return { raw: t.slice(0, 300) }; }
   return { rows: (j.pageHelp && j.pageHelp.data) || j.result || [] };
 }
+async function range(days, want) {
+  const ds = []; let t = Date.now() + 8 * 3600e3;
+  while (ds.length < days) { const d = new Date(t); const w = d.getUTCDay(); if (w && w < 6) ds.push(d.toISOString().slice(0, 10)); t -= 864e5; }
+  const res = await Promise.all(ds.map(d => sse(d).catch(() => ({ rows: [] }))));
+  const out = [];
+  res.forEach((r, i) => { const v = {}; (r.rows || []).forEach(x => { if (want.includes(x.SEC_CODE)) v[x.SEC_CODE] = +(+x.TOT_VOL / 1e4).toFixed(2); }); if (Object.keys(v).length) out.push({ d: ds[i], v }); });
+  return out.reverse();
+}
 export default async req => {
   const url = new URL(req.url);
+  if (url.searchParams.get("days")) {
+    const want = (url.searchParams.get("s") || "").split(",").filter(x => /^\d{6}$/.test(x)).slice(0, 20);
+    return J({ rows: await range(Math.min(45, +url.searchParams.get("days") || 30), want) });
+  }
   const date = url.searchParams.get("date") || new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
   const want = (url.searchParams.get("s") || "").split(",").filter(x => /^\d{6}$/.test(x));
   const r = await sse(date);

@@ -297,7 +297,7 @@ async function go(v){
   try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
   if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
-  if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderQuick)window.renderQuick(m,IDX);if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
+  if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderQuick)window.renderQuick(m,IDX);if(cur==="charts"&&window.renderBoard)window.renderBoard(m,IDX,cache);if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
   if(v==="ps"){window.renderPS(m,getJSON);return;}
   if(v==="method"){window.renderMethod();return;}
@@ -325,6 +325,7 @@ async function go(v){
 <script src="visual.js"></script>
 <script src="ps.js"></script>
 <script src="extra.js"></script>
+<script src="board.js"></script>
 <script src="levels.js"></script>
 <script src="talk.js"></script>
 </body>
