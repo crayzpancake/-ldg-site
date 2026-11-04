@@ -48,9 +48,12 @@
       ${L ? `<div class="bd-cards">${card("5500大卡", L.q5500, "", `${sg(L.c5500)} · ${md(L.d)}`)}${card("5000大卡", L.q5000 ?? "—", "", `${sg(L.c5000)} · ${md(L.d)}`)}${card("4500大卡", L.q4500 ?? "—", "", `${sg(L.c4500)} · ${md(L.d)}`)}</div>` : ""}
       ${LT ? `<div class="bd-sub">年度长协（每月1日更新 · ${md(LT.d)}）</div><div class="bd-cards">${card("长协 5500", LT.q5500, "", sg(LT.c5500))}${card("长协 5000", LT.q5000, "", sg(LT.c5000))}${card("长协 4500", LT.q4500, "", sg(LT.c4500))}${L ? card("现货比长协（5500）", "+" + (L.q5500 - LT.q5500), "", `高 ${((L.q5500 / LT.q5500 - 1) * 100).toFixed(0)}%`) : ""}</div>` : ""}
       ${M.jjt ? `<div class="bd-sub">金鸡滩坑口价（${md(M.jjt.d)}）</div><div class="bd-cards">${M.jjt.items.map(x => card(x.n, x.v, "", sg(x.c))).join("")}</div>` : ""}
-      <table class="bd-t"><tr><th>日期</th><th>5500</th><th>涨跌</th><th>5000</th><th>4500</th></tr>${C.slice(-10).reverse().map(r => `<tr><td>${md(r.d)}</td><td>${r.q5500}</td><td>${sg(r.c5500)}</td><td>${r.q5000 ?? "—"}</td><td>${r.q4500 ?? "—"}</td></tr>`).join("")}</table>
+      <div class="bd-sub">5500大卡走势</div><div id="bd-cci"></div><div class="bd-src" style="margin-top:0">他的判断：这波煤价差不多见顶，但 <b>880 很难跌破</b>。</div>
+      <details><summary style="font-size:13px;cursor:pointer;margin-top:6px">看最近 10 天</summary>      <table class="bd-t"><tr><th>日期</th><th>5500</th><th>涨跌</th><th>5000</th><th>4500</th></tr>${C.slice(-10).reverse().map(r => `<tr><td>${md(r.d)}</td><td>${r.q5500}</td><td>${sg(r.c5500)}</td><td>${r.q5000 ?? "—"}</td><td>${r.q4500 ?? "—"}</td></tr>`).join("")}</table></details>
       <div class="bd-src">日价来自他每天发的 CCI 指数；长协和金鸡滩价格来自他转发的数据截图${M.coal_lt ? "（" + esc(M.coal_lt.src) + "）" : ""}。</div>`;
     wrap.appendChild(coalSec);
+    const cci = C.filter(r => r.q5500).map(r => ({ d: r.d, y: r.q5500, chg: r.c5500 }));
+    if (cci.length > 2 && window.lineChart) window.lineChart(coalSec.querySelector("#bd-cci"), cci, { unit: "" });
 
     // ---- ETF 份额 ----
     const G = M.etf_groups || [];

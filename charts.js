@@ -137,14 +137,12 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
    ${ch.alloc?`<section class="box"><h2>仓位结构 <small>${ch.alloc.date} 他公布的月度总结（每月随他的月度总结更新）${ch.alloc.prev?` · 对比${ch.alloc.prev.date}`:""}</small></h2><div id="c-alloc"></div><div class="cap">${ch.alloc.note||""}</div></section>`:""}
    <section class="box"><h2>电解铝 A00 铝锭价格 <small>无锡，元/吨 · ${A.length} 个报价日</small></h2><div id="c-alu"></div><div class="cap">他的判断：26年中枢 <b>2.3万上下</b>，27年 <b>2.2–2.3万</b>，后几年大概率守不住 2.4 万。</div></section>
    ${O.length>2?`<section class="box"><h2>氧化铝价格 <small>山西，元/吨</small></h2><div id="c-alo"></div></section>`:""}
-   <section class="box"><h2>动力煤 CCI 5500 大卡 <small>元/吨 · ${C.length} 个报价日</small></h2><div id="c-cci"></div><div class="cap">他的判断：这波煤价差不多见顶，但 <b>880 很难跌破</b>。</div></section>
    ${ch.gold?`<section class="box"><h2>黄金（人民币计价）防线 <small>${ch.gold.date} 他给的位置，元/克 · 现价实时</small></h2><div id="c-gold"></div><div class="cap">${ch.gold.note||""}</div></section>`:""}
   </div>`;
   const draw=()=>{
     if(ch.alloc)hbars(main.querySelector("#c-alloc"),ch.alloc.items,{unit:"%",prev:ch.alloc.prev&&ch.alloc.prev.items});
     if(A.length)lineChart(main.querySelector("#c-alu"),A,{unit:""});
     if(O.length>2)lineChart(main.querySelector("#c-alo"),O,{unit:""});
-    if(C.length)lineChart(main.querySelector("#c-cci"),C,{unit:""});
     if(ch.gold)ladder(main.querySelector("#c-gold"),ch.gold.levels,window.__goldNow||ch.gold.cur);
   };
   draw();
