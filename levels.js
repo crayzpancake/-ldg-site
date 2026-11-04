@@ -33,8 +33,7 @@
 .lv-row .p{font-variant-numeric:tabular-nums}
 .lv-row .p small{color:var(--mute);margin-left:6px}
 .lv-row .gap{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-.lv-row.hit{background:var(--soft);outline:2px solid var(--red)}
-.lv-row.hit .gap{color:var(--red)}
+.lv-row.hit .gap{color:var(--mute);font-weight:600}
 .lv-row .bar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
 .lv-row .bar i{display:block;height:100%;border-radius:3px}
 .lv-row.buyr .bar i{background:#1a9a4a}.lv-row.sellr .bar i{background:#d00}
@@ -66,7 +65,7 @@
         if (px) {
           const d = (x.p / px - 1) * 100;            // 负数=要跌，正数=要涨
           hit = x.k === "buy" ? px <= x.p : px >= x.p;
-          gap = hit ? "✅ 已到" : (d < 0 ? `还要跌 ${Math.abs(d).toFixed(1)}%` : `还要涨 ${d.toFixed(1)}%`);
+          gap = hit ? (x.k === "buy" ? "现价已在其下" : "现价已在其上") : (d < 0 ? `离这还有 ${Math.abs(d).toFixed(1)}%` : `离这还有 ${d.toFixed(1)}%`);
           w = hit ? 100 : Math.max(3, 100 - Math.min(100, Math.abs(d) * 2.5));   // 离得越近条越满（差 40% 以上算空）
           gap += hit ? "" : `<br><small style="font-weight:400;color:var(--mute)">差 ${Math.abs(x.p - px).toFixed(2)}${L.unit === "元/克" ? " 元/克" : " 元"}</small>`;
         }
@@ -87,9 +86,9 @@
     const L = IDX.levels || [];
     const hits = L.reduce((n, x) => n + (x.lv || []).filter(v => { const q = Q[x.code]; return q && q.px > 0 && (v.k === "buy" ? q.px <= v.p : q.px >= v.p); }).length, 0);
     const t = at ? new Date(at) : null;
-    el.innerHTML = `<section class="box lv-box"><h2>🎯 离他说的操作价还差多少 <small><span class="lv-live${fail ? " off" : ""}"></span>${fail ? "行情暂时连不上" : (t ? `实时 · ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")} 更新` : "读取行情…")}${hits ? ` · <b>${hits} 个价位已到</b>` : ""}</small></h2>
+    el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${fail ? "行情暂时连不上" : (t ? `实时 · ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")} 更新` : "读取行情…")}</small></h2>
       <div class="lv-grid">${L.map(cardHTML).join("")}</div>
-      <div class="lv-note">绿色 = 他说的建仓/加仓价，红色 = 目标价/减仓价；“还要跌/涨”是现价到该价位的距离，条越满离得越近。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理博主公开说过的价位，不构成投资建议。</div>
+      <div class="lv-note">绿色 = 他提过的买入/加仓相关价位，红色 = 他提过的目标价；百分比是现价离该价位的距离，条越满离得越近。这些是他在不同时间、不同前提下随口提到的参考位，不是操作信号，他也可能随时改变想法。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理公开发言，不构成投资建议，请勿据此去打扰博主本人。</div>
     </section>`;
   }
 

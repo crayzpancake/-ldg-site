@@ -160,6 +160,8 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 .sm-d{font-size:13px;font-weight:700}.sm-d.up{color:var(--red)}.sm-d.dn{color:var(--mute)}
 .sm-v{font-size:28px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}.sm-v small{font-size:14px;color:var(--mute);margin-left:1px}
 .sm-s{font-size:11px;color:var(--mute)}
+.ps-why{margin:10px 0;padding:10px 12px;border-radius:10px;background:#fff4d6;color:#6b4e00;font-size:13.5px;line-height:1.65;border:1px solid #f0d58a}
+@media (prefers-color-scheme:dark){.ps-why{background:#2e2610;color:#f0d58a;border-color:#5a4a1a}}
 .ps-note{font-size:12px;color:var(--mute);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:8px;line-height:1.6}
 .mk-wrap{margin-top:12px}.mk-cap{font-size:12px;color:var(--mute);margin-bottom:6px}
 .mk-scroll{overflow:hidden;border-radius:6px;border:1px solid #c9d3df;position:relative;cursor:zoom-in}
@@ -218,7 +220,7 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 </header>
 <nav class="tabs" id="tabs"></nav>
 <main id="main"><div class="empty">加载中…</div></main>
-<div class="foot">数据来自微博公开内容，每天自动更新。博主本人内容全文收录；转发的他人长文只节选，点「原文」看全文。</div>
+<div class="foot">数据来自他在微博、雪球的公开发言，只收投资相关内容，每天自动更新。转发的他人长文只节选，点「原文」看全文。</div>
 </div>
 <script>
 const ORDER=["持仓与收益","黄金白银","电解铝","煤炭","铜","水电","火电","券商银行","利率与宏观","市场与大盘","方法论","其他个股","投资圈"];
@@ -233,7 +235,7 @@ async function getJSON(p){const r=await fetch(p,{cache:"no-cache"});if(!r.ok)thr
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="track">📌 价位/仓位追踪</button>`;
+  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
 function mark(v){const k=/^\d/.test(v)?"day":v;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));}
@@ -291,13 +293,14 @@ function trackHTML(){
 async function go(v){
   cur=v; mark(v);
   const m=document.getElementById("main");
-  const h=["track","weeks","charts","mind","ps"].includes(v)?v:"d"+v.replace(/-/g,"");
+  const h=["track","weeks","charts","mind","ps","method"].includes(v)?v:"d"+v.replace(/-/g,"");
   try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
   if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
-  if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
+  if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderQuick)window.renderQuick(m,IDX);if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
   if(v==="ps"){window.renderPS(m,getJSON);return;}
+  if(v==="method"){window.renderMethod();return;}
   m.innerHTML=daybar(v)+`<div class="empty">加载中…</div>`; wireDaybar(v);
   try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});} }
   catch(e){ m.innerHTML=daybar(v)+`<div class="empty">这一天的数据读取失败，请稍后刷新</div>`; wireDaybar(v); }
@@ -310,7 +313,9 @@ async function go(v){
   const h=location.hash.slice(1);
   window.__goDay=d=>go(d);
   let start="charts";
-  if(["track","weeks","charts","mind","ps"].includes(h))start=h;
+  if(["track","weeks","charts","mind","ps","method"].includes(h))start=h;
+  if(h==="news"&&window.renderNews){window.renderNews();return;}
+  if(h==="gloss"&&window.renderGloss){window.renderGloss();return;}
   else if(/^d\d{8}$/.test(h)){const d=h.slice(1,5)+"-"+h.slice(5,7)+"-"+h.slice(7);if(IDX.days.some(x=>x.date===d))start=d;}
   if(/^s=/.test(h)&&window.doSearch){window.doSearch(decodeURIComponent(h.slice(2)));return;}
   go(start);

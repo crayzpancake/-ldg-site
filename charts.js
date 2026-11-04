@@ -60,7 +60,7 @@ function stackBars(host,days){
     if(inv){el("rect",{x,y:Y(inv),width:bw,height:Y(0)-Y(inv),class:"s1",rx:Math.min(2,bw/2)},g);}
     if(chat){el("rect",{x,y:Y(d.count),width:bw,height:Math.max(0,Y(inv)-Y(d.count)-1.5),class:"s0",rx:Math.min(2,bw/2)},g);}
     const hit=el("rect",{x:m.l+i*slot,y:m.t,width:slot,height:H-m.t-m.b,fill:"transparent"},g);
-    hit.onpointermove=e=>showTip(`<div class="tt-d">${fmtD(d.date)} ${d.weekday||""}</div><div class="tt-v">共 ${d.count} 条</div><div class="tt-m">投资相关 ${inv} · 闲聊 ${chat}</div><div class="tt-m">点击查看这一天</div>`,e);
+    hit.onpointermove=e=>showTip(`<div class="tt-d">${fmtD(d.date)} ${d.weekday||""}</div><div class="tt-v">共 ${d.count} 条</div><div class="tt-m">点击查看这一天</div>`,e);
     hit.onpointerleave=hideTip;hit.onclick=()=>{hideTip();window.__goDay&&window.__goDay(d.date);};
     if(d.date.slice(8)==="01"||i===0){const t=el("text",{x:x,y:H-8,class:"ax"},svg);t.textContent=+d.date.slice(5,7)+"月";}
   });
@@ -129,8 +129,8 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
   const tile=(v,l,s)=>`<div class="tile"><div class="tile-v">${v}</div><div class="tile-l">${l}</div>${s?`<div class="tile-s">${s}</div>`:""}</div>`;
   main.innerHTML=`<div class="viz-root">
    <div class="tiles">
-    ${tile(tot,"条微博",`${fmtD(first)} – ${fmtD(last)}，${days.length} 天`)}
-    ${tile(invTot,"条与投资相关",`占 ${Math.round(invTot/tot*100)}%`)}
+    ${tile(tot,"条投资相关发言",`${fmtD(first)} – ${fmtD(last)}，${days.length} 天`)}
+    ${tile(Object.keys(topicTot).length,"个话题",`最多：${topics.slice(0,2).join("、")}`)}
     ${lastA?tile(lastA.y,"A00铝锭（元/吨）",`${fmtD(lastA.d)} 他发的最新价`):""}
     ${lastC?tile(lastC.y,"动力煤 CCI 5500",`${fmtD(lastC.d)} 他发的最新价`):""}
    </div>
@@ -140,7 +140,7 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
    <section class="box"><h2>动力煤 CCI 5500 大卡 <small>元/吨 · ${C.length} 个报价日</small></h2><div id="c-cci"></div><div class="cap">他的判断：这波煤价差不多见顶，但 <b>880 很难跌破</b>。</div></section>
    ${ch.gold?`<section class="box"><h2>黄金（人民币计价）防线 <small>${ch.gold.date} 他给的位置，元/克</small></h2><div id="c-gold"></div><div class="cap">${ch.gold.note||""}</div></section>`:""}
    ${ch.cash&&ch.cash.length?`<section class="box"><h2>“仙晶”（可用现金）变化 <small>他自己报的数，单位“个”</small></h2><div id="c-cash"></div><div class="cap">口径不完全一致：有的已扣除10月提现的50个，有的没扣，看趋势即可。</div></section>`:""}
-   <section class="box"><h2>每天发了多少条 <small>蓝 = 投资相关，灰 = 闲聊 · 点柱子看当天</small></h2><div class="legend"><span><i class="sw s1"></i>投资相关</span><span><i class="sw s0"></i>闲聊</span></div><div id="c-days"></div></section>
+   <section class="box"><h2>每天发了多少条 <small>只统计投资相关 · 点柱子看当天</small></h2><div id="c-days"></div></section>
    <section class="box"><h2>话题热度（按周） <small>每格 = 那一周该话题的条数，颜色越深越多</small></h2><div id="c-heat"></div></section>
    <section class="box"><h2>投资话题占比 <small>全部 ${invTot} 条投资相关微博</small></h2><div id="c-topics"></div></section>
    <details class="box tbl"><summary>看数据表</summary><div id="c-table"></div></details>

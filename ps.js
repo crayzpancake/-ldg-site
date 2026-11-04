@@ -27,7 +27,7 @@ function stack(host,cols,onPick,sel){
     el("circle",{cx:X(cols.length-1),cy:Y(last),r:3.5,fill:COL[k],stroke:"var(--card)","stroke-width":1.5},svg);
     const si=cols.findIndex(c=>c.ym===sel);if(si>=0)el("line",{x1:X(si),x2:X(si),y1:2,y2:H-2,stroke:"var(--ink)","stroke-width":1,opacity:.35},svg);
     cols.forEach((c,i)=>{const h=el("rect",{x:X(i)-(W/cols.length)/2,y:0,width:W/cols.length,height:H,fill:"transparent",style:"cursor:pointer"},svg);
-      tip(h,`<div class="tt-d">${c.est?"10月（估算）":c.ym.replace("-","年")+"月底"}</div><div class="tt-v">${k} ${c.p[k].toFixed(1)}%</div>`);h.addEventListener("click",()=>onPick(c.ym));});
+      tip(h,`<div class="tt-d">${c.est?(+c.ym.slice(5))+"月（估算）":c.ym.replace("-","年")+"月底"}</div><div class="tt-v">${k} ${c.p[k].toFixed(1)}%</div>`);h.addEventListener("click",()=>onPick(c.ym));});
   });
 }
 function totalLine(host,ms){
@@ -37,7 +37,7 @@ function totalLine(host,ms){
   const X=i=>m.l+(W-m.l-m.r)*i/(ms.length-1),Y=v=>m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo));
   for(let v=lo;v<=hi;v+=100){el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),class:"grid"},svg);const t=el("text",{x:m.l-4,y:Y(v)+4,class:"ax","text-anchor":"end"},svg);t.textContent=v;}
   const realN=ms.filter(x=>!x.est).length;el("path",{d:ms.slice(0,realN).map((x,i)=>(i?"L":"M")+X(i)+","+Y(x.total)).join(""),class:"ln"},svg);if(realN<ms.length)el("path",{d:`M${X(realN-1)},${Y(ms[realN-1].total)}L${X(ms.length-1)},${Y(ms[ms.length-1].total)}`,class:"ln","stroke-dasharray":"4 4"},svg);
-  ms.forEach((x,i)=>{el("circle",{cx:X(i),cy:Y(x.total),r:3.5,class:"dot"},svg);if(i%3===0||i===ms.length-1){const t=el("text",{x:X(i),y:H-6,class:"ax","text-anchor":"middle"},svg);t.textContent=x.est?"10月*":lab(x.ym);}
+  ms.forEach((x,i)=>{el("circle",{cx:X(i),cy:Y(x.total),r:3.5,class:"dot"},svg);if(i%3===0||i===ms.length-1){const t=el("text",{x:X(i),y:H-6,class:"ax","text-anchor":"middle"},svg);t.textContent=x.est?(+x.ym.slice(5))+"月*":lab(x.ym);}
     const h=el("circle",{cx:X(i),cy:Y(x.total),r:12,fill:"transparent"},svg);tip(h,`<div class="tt-d">${x.ym.replace("-","年")}月底${x.est?"（预测）":""}</div><div class="tt-v">${x.total.toFixed(1)} 万</div>`);});
   const L=ms[ms.length-1];const t=el("text",{x:X(ms.length-1)-6,y:Y(L.total)-9,class:"lbl halo","text-anchor":"end"},svg);t.textContent=L.total.toFixed(0)+"万";
   const mi=ms.reduce((a,b)=>a.total<b.total?a:b);const k=ms.indexOf(mi);const t2=el("text",{x:X(k),y:Y(mi.total)+16,class:"ax halo","text-anchor":"middle"},svg);t2.textContent=mi.total.toFixed(0);
@@ -64,17 +64,17 @@ function changesHTML(m){
    <div class="cg-m">${c.from} → <b>${c.to}</b>${c.amt?`<span>（${c.amt>0?"+":""}${c.amt}万元）</span>`:""}</div>
    <ul class="cg-w">${c.why.map(w=>`<li>${w.replace(/&/g,"&amp;").replace(/<(?!\/?b>)/g,"&lt;")}</li>`).join("")}</ul></div>`).join("")}</div>`;
 }
-function mockHTML(k){
+function mockHTML(k,YM){const MKM=YM?+YM.slice(5):10;
   const cls=v=>v>=0?"mk-up":"mk-dn";
   const A=k.a.map(r=>`<tr class="${cls(r.pl)}"><td>${r.code}</td><td>${r.name}</td><td>${r.s}</td><td>${r.s}</td><td>${fmt(r.cost)}</td><td>${fmt(r.p)}</td><td>${fmt(r.mv)}</td><td>${fmt(r.pl)}</td><td>${r.pct.toFixed(2)}</td><td>${r.mk}</td></tr>`).join("");
   const H=k.hk.map(r=>`<tr class="${cls(r.pl)}"><td>${r.name}</td><td>${r.code}</td><td>${r.s}</td><td>${fmt(r.cost)}</td><td>${fmt(r.mv)}</td><td>${fmt(r.pl)}</td><td>${r.pct.toFixed(3)}</td></tr>`).join("");
-  return `<div class="mk-wrap"><div class="mk-cap">↓ 按交易软件截图样式还原的 10 月底持仓（预测）· 点表格放大</div>
+  return `<div class="mk-wrap"><div class="mk-cap">↓ 按交易软件截图样式还原的 ${MKM} 月底持仓（预测）· 点表格放大</div>
   <div class="mk-scroll"><div class="mk">
    <div class="mk-tab">人民币</div>
    <div class="mk-sum"><div><span>资金余额</span><b>${fmt(k.cash,2)}</b><span>可取金额</span><b>${fmt(k.cash,2)}</b><em>最近查询时间:${k.asof}</em></div>
     <div><span>冻结金额</span><b>200.00</b><span>参考股票市值(含港股通)</span><b>${fmt(k.stockmv,2)}</b></div>
     <div><span>可用金额</span><b>${fmt(k.cash,2)}</b><span>参考总资产(含港股通)</span><b>${fmt(k.total,2)}</b><i>修改成本价</i></div>
-    <div class="mk-warn">提示：本表为根据10月月度总结推算的预测持仓，并非真实截图</div></div>
+    <div class="mk-warn">提示：本表为根据他${MKM}月在微博、雪球的发言推算的预测持仓，并非真实截图</div></div>
    <table class="mk-t"><tr><th>证券代码</th><th>证券名称</th><th>股票余额</th><th>可用余额</th><th>成本价</th><th>市价</th><th>市值</th><th>浮动盈亏</th><th>盈亏比例(%)</th><th>交易市场</th></tr>${A}</table>
    <div class="mk-tab" style="margin-top:10px">股票持仓</div>
    <table class="mk-t"><tr><th>证券名称</th><th>证券代码</th><th>可用股份</th><th>参考成本价(港币)</th><th>最新市值(人民币)</th><th>参考盈亏(人民币)</th><th>盈亏比例(%)</th></tr>${H}</table>
@@ -89,14 +89,14 @@ window.renderPS=async function(main,getJSON){
     const i=ms.findIndex(x=>x.ym===sel),m=ms[i],prev=ms[i-1];
     const cols=ms.map(x=>({ym:x.ym,est:!!x.est,p:pct(x)}));
     main.innerHTML=`<div class="viz-root">
-     <section class="box"><h2>近一年仓位变化 <small>大数字=10月（预测）占比 · 箭头=比一年前</small></h2><div id="ps-stack"></div>
+     <section class="box"><h2>近一年仓位变化 <small>大数字=${(()=>{const L=ms[ms.length-1];return (+L.ym.slice(5))+"月"+(L.est?"（预测）":"")})()}占比 · 箭头=比一年前</small></h2><div id="ps-stack"></div>
       <div class="cap">折线是2025年10月→2026年10月每月底的占比，虚线段是10月估算（10月起不再发PS图）。点折线可切换下面的月份。</div></section>
      <section class="box"><h2>游戏仓总资产 <small>万元，每月底</small></h2><div id="ps-total"></div></section>
      <section class="box"><h2>${m.ym.slice(0,4)}年${+m.ym.slice(5)}月底持仓${m.est?`<span class="ps-t new" style="margin-left:6px;vertical-align:3px">预测</span>`:""} <small>市值，万元 · ${m.est?"对比9月底市值":"对比上月股数"}</small></h2>
-      <div class="chips ps-chips">${ms.map(x=>`<button data-ym="${x.ym}" class="${x.ym===sel?"on":""}">${x.est?"26/10 预测":lab(x.ym)}</button>`).join("")}</div>
+      <div class="chips ps-chips">${ms.map(x=>`<button data-ym="${x.ym}" class="${x.ym===sel?"on":""}">${x.est?lab(x.ym)+" 预测":lab(x.ym)}</button>`).join("")}</div>
       <div class="ps-kpi"><div><b>${m.est?"≈":""}${m.total.toFixed(1)}</b><span>总资产（万）</span></div><div><b style="color:${m.pl>=0?"var(--red)":"var(--ink)"}">${m.pl>=0?"+":""}${m.pl}</b><span>本月盈亏（万）</span></div><div><b>${m.h.filter(x=>x.v>0).length}</b><span>只持股</span></div></div>
-      ${m.est?`<div class="ps-note">${esc(m.note)}</div>`+changesHTML(m):""}${holdings(m,prev)}
-      ${m.est?(m.mock?mockHTML(m.mock):""):`<div class="ps-imgs">${m.imgs.map(s=>`<img src="${s}" alt="${m.ym} 持仓截图" loading="lazy">`).join("")}</div>`}
+      ${m.est?`<div class="ps-why">⚠️ <b>为什么是预测？</b>9月以后受监管限制，他不再公开晒真实的持仓截图（PS图）。所以从10月起，这里的月底持仓是<b>根据他当月在微博和雪球的公开发言推测</b>的，数字都是估算，不代表他的真实持仓；下面的“交易软件截图”也是按推测结果仿制的，<b>不是真实截图</b>。</div><div class="ps-note">${esc(m.note)}</div>`+changesHTML(m):""}${holdings(m,prev)}
+      ${m.est?(m.mock?mockHTML(m.mock,m.ym):""):`<div class="ps-imgs">${m.imgs.map(s=>`<img src="${s}" alt="${m.ym} 持仓截图" loading="lazy">`).join("")}</div>`}
       <a class="cap" href="https://xueqiu.com/8790885129/${m.id}" target="_blank" rel="noopener">雪球原帖：${esc(m.title)}</a></section></div>`;
     stack(main.querySelector("#ps-stack"),cols,ym=>{sel=window.__psSel=ym;draw();},sel);
     totalLine(main.querySelector("#ps-total"),ms);
