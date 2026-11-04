@@ -68,19 +68,22 @@
 
     (async () => {
       try {
-        const codes = G.flatMap(g => g.codes.map(c => c[0]));
-        const r = await fetch(`/api/etf?days=30&s=${codes.join(",")}`); const j = await r.json();
-        const R = j.rows || []; if (!R.length) throw 0;
-        const last = R[R.length - 1], prev = R[R.length - 2] || {}, wk = R[Math.max(0, R.length - 6)] || {};
-        etfSec.innerHTML = `<h2>ETF 份额 <small>亿份 · 上交所每日公布 · 最新 ${md(last.d)}</small></h2>` + G.map((g, gi) => {
-          const tot = row => g.codes.reduce((a, c) => a + ((row.v || {})[c[0]] || 0), 0);
-          const T = R.map(row => ({ d: row.d, y: +tot(row).toFixed(2) }));
-          return `<div class="bd-sub">${esc(g.name)} · 合计 ${tot(last).toFixed(2)} 亿份 ${sg(tot(last) - tot(prev), 2)}（近一周 ${sg(tot(last) - tot(wk), 2)}）</div>
-            <div class="bd-cards">${g.codes.map(([c, n]) => { const v = last.v[c], p = (prev.v || {})[c]; return v == null ? "" : card(`${esc(n)} · ${c}`, v.toFixed(2), "亿份", `${sg(p != null ? v - p : null, 2)}${p ? `（${sg((v / p - 1) * 100, 2)}%）` : ""}`); }).join("")}</div>
+        const codes = G.flatMap(g => g.codes.map(c => c[0])).join(",");
+        const [jm, jd] = await Promise.all([fetch(`/api/etf?months=13&s=${codes}`).then(r => r.json()), fetch(`/api/etf?days=4&s=${codes}`).then(r => r.json()).catch(() => ({ rows: [] }))]);
+        const R = jm.rows || []; if (!R.length) throw 0;
+        const D = jd.rows || [];
+        const last = D.length ? D[D.length - 1] : R[R.length - 1], prevD = D[D.length - 2] || null;
+        const prevM = R.length >= 2 ? R[R.length - 2] : null, yearAgo = R[0];
+        const lab = r => r.d === last.d ? `${md(r.d)}` : `${+r.ym.slice(2, 4)}/${+r.ym.slice(5)}`;
+        etfSec.innerHTML = `<h2>ETF 份额 <small>亿份 · 最近一年按月底 · 最新 ${md(last.d)}</small></h2>` + G.map((g, gi) => {
+          const tot = row => row ? g.codes.reduce((a, c) => a + ((row.v || {})[c[0]] || 0), 0) : null;
+          const t0 = tot(last);
+          return `<div class="bd-sub">${esc(g.name)} · 合计 ${t0.toFixed(2)} 亿份　较上一交易日 ${sg(prevD ? t0 - tot(prevD) : null, 2)}　较上月底 ${sg(prevM ? t0 - tot(prevM) : null, 2)}　较一年前 ${sg(t0 - tot(yearAgo), 2)}</div>
+            <div class="bd-cards">${g.codes.map(([c, n]) => { const v = last.v[c]; if (v == null) return ""; const p = prevM && prevM.v[c], y = yearAgo.v[c], dd = prevD && prevD.v[c]; return card(`${esc(n)} · ${c}`, v.toFixed(2), "亿份", `日 ${sg(dd != null ? v - dd : null, 2)} · 月 ${sg(p != null ? v - p : null, 2)}<br>较一年前 ${y ? sg((v / y - 1) * 100, 0) + "%" : "—"}`); }).join("")}</div>
             <div id="bd-etf-${gi}"></div>
-            <details><summary style="font-size:13px;cursor:pointer">看最近 10 个交易日</summary><table class="bd-t"><tr><th>日期</th>${g.codes.map(c => `<th>${esc(c[1])}</th>`).join("")}<th>合计</th><th>变化</th></tr>${R.slice(-10).reverse().map((row, i, a) => { const t = tot(row), p = a[i + 1] ? tot(a[i + 1]) : null; return `<tr><td>${md(row.d)}</td>${g.codes.map(c => `<td>${row.v[c] != null ? row.v[c].toFixed(2) : "—"}</td>`).join("")}<td>${t.toFixed(2)}</td><td>${sg(p != null ? t - p : null, 2)}</td></tr>`; }).join("")}</table></details>`;
-        }).join("") + `<div class="bd-src">数据来自上交所 ETF 规模日报，自动更新；只统计在上交所上市的几只主要 ETF。</div>`;
-        G.forEach((g, gi) => { const host = etfSec.querySelector(`#bd-etf-${gi}`); const T = R.map(row => ({ d: row.d, y: +g.codes.reduce((a, c) => a + (row.v[c[0]] || 0), 0).toFixed(2) })); if (host && T.length > 2 && window.lineChart) window.lineChart(host, T, { unit: "" }); });
+            <details><summary style="font-size:13px;cursor:pointer">看每月底份额表</summary><div style="overflow-x:auto"><table class="bd-t"><tr><th>月份</th>${g.codes.map(c => `<th>${esc(c[1])}</th>`).join("")}<th>合计</th><th>当月变化</th></tr>${R.slice().reverse().map((row, i, a) => { const t = tot(row), p = a[i + 1] ? tot(a[i + 1]) : null; return `<tr><td>${row === R[R.length - 1] && row.ym === last.d.slice(0, 7) ? md(row.d) + "（本月至今）" : row.ym.slice(2).replace("-", "年") + "月"}</td>${g.codes.map(c => `<td>${row.v[c[0]] != null ? row.v[c[0]].toFixed(2) : "—"}</td>`).join("")}<td>${t.toFixed(2)}</td><td>${sg(p != null ? t - p : null, 2)}</td></tr>`; }).join("")}</table></div></details>`;
+        }).join("") + `<div class="bd-src">每月取月底最后一个交易日的份额，本月为最新一天；数据来自上交所 ETF 规模日报，每天自动更新。份额增加一般被看作资金流入。</div>`;
+        G.forEach((g, gi) => { const host = etfSec.querySelector(`#bd-etf-${gi}`); const T = R.map(row => ({ d: row.d, y: +g.codes.reduce((a, c) => a + (row.v[c[0]] || 0), 0).toFixed(1) })); if (host && T.length > 2 && window.lineChart) window.lineChart(host, T, { unit: "" }); });
       } catch (e) { etfSec.innerHTML = `<h2>ETF 份额</h2><div class="empty">暂时读不到，稍后刷新</div>`; }
     })();
     (async () => {
