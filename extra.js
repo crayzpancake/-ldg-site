@@ -97,36 +97,6 @@
     } catch (e) { sec.querySelector("#c-cu").innerHTML = `<div class="empty">铜价暂时读不到，稍后刷新</div>`; }
   };
 
-  // ---------- 📈 回看他的判断 ----------
-  const KN = { buy: "买入/加仓", sell: "减仓/卖出", support: "支撑位", view: "看法" };
-  window.renderReview = async function (el, IDX) {
-    const C = IDX.calls || []; if (!el || !C.length) return;
-    el.innerHTML = `<section class="box"><h2>📈 回看：他说完之后走势怎样 <small>按当天收盘价对比现在</small></h2><div class="empty">读取历史股价…</div></section>`;
-    const codes = [...new Set(C.map(c => c.code))];
-    let K = {}, Q = {};
-    try { K = await kline(codes, 160); } catch (e) {}
-    try { const r = await fetch("/api/quote?s=" + codes.join(",")); Q = (await r.json()).q || {}; } catch (e) {}
-    const rows = C.slice().sort((a, b) => b.d.localeCompare(a.d)).map(c => {
-      const ks = K[c.code] || [];
-      const i0 = ks.findIndex(r => r[0] >= c.d);
-      const then = i0 >= 0 ? ks[i0] : null;
-      const after = i0 >= 0 ? ks.slice(i0) : [];
-      const now = Q[c.code] && Q[c.code].px > 0 ? Q[c.code].px : (ks.length ? ks[ks.length - 1][1] : null);
-      let lo = after.length ? Math.min(...after.map(r => r[3])) : null, hi = after.length ? Math.max(...after.map(r => r[2])) : null;
-      if (now != null && lo != null) { lo = Math.min(lo, now); hi = Math.max(hi, now); }
-      const chg = then && now ? (now / then[1] - 1) * 100 : null;
-      let res = "";
-      if (c.k === "support" && c.p && lo != null) res = lo < c.p ? `期间最低 ${lo}，<b>跌破过 ${c.p}</b>` : `期间最低 ${lo}，没跌破 ${c.p}`;
-      else if (lo != null) res = `期间最低 ${lo} · 最高 ${hi}`;
-      return `<tr><td class="num">${md(c.d)}</td><td><b>${esc(c.name)}</b><br><span class="rv-k ${c.k}">${KN[c.k] || ""}</span><small>${rich(c.x)}</small> <a href="${wlink(c.b, c.s)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--mute)">原文</a></td>
-        <td class="num">${then ? then[1] : "—"}${then && then[0] !== c.d ? `<br><small>${md(then[0])}收</small>` : ""}</td><td class="num">${now != null ? now : "—"}</td>
-        <td class="num ${chg == null ? "" : chg >= 0 ? "up" : "dn"}">${chg == null ? "—" : (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%"}</td><td class="hide-m"><small>${res}</small></td></tr>`;
-    }).join("");
-    el.innerHTML = `<section class="box"><h2>📈 回看：他说完之后走势怎样 <small>按当天收盘价对比现在 · ${C.length} 条</small></h2>
-      <div style="overflow-x:auto"><table class="rv-t"><tr><th>日期</th><th>他说/做了什么</th><th class="num">当天收盘</th><th class="num">现在</th><th class="num">之后涨跌</th><th class="hide-m">之后区间</th></tr>${rows}</table></div>
-      <div class="cap">只列他本人有明确买卖动作、价位或方向判断的发言；价格为不复权收盘价（黄金、铜为期货主力）。时间还短，涨跌只代表到目前为止，不代表他判断对错，也不构成投资建议。</div></section>`;
-  };
-
   document.addEventListener("DOMContentLoaded", addSearchBox);
   if (document.readyState !== "loading") addSearchBox();
 })();

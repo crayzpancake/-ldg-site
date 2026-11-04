@@ -7,7 +7,7 @@
 <meta name="description" content="挖地瓜的超级鹿鼎公 微博每日整理：持仓、电解铝、煤炭、黄金的观点和价位，实时对比他说的建仓/加仓价。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="超级鹿鼎公微博汇总">
-<meta property="og:description" content="每日整理他的微博要点、持仓变化和关键价位，股价实时对比，还能匿名留言。">
+<meta property="og:description" content="给没时间刷微博的朋友：每日整理他的微博要点、持仓变化和关键价位，还能匿名留言。">
 <meta property="og:url" content="https://ludinggongfans.netlify.app/">
 <meta property="og:image" content="https://ludinggongfans.netlify.app/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -283,7 +283,7 @@ function trackHTML(){
   const sel=window.__asset||"全部";
   let rows=IDX.tracker.filter(r=>sel==="全部"||r.a===sel).sort((a,b)=>a.a===b.a?b.d.localeCompare(a.d):assets.indexOf(a.a)-assets.indexOf(b.a));
   const rb=(IDX.charts&&IDX.charts.rebal)?`<section class="box viz-root"><h2>10月仓位推算 <small>${IDX.charts.rebal.from} 持仓截图 → ${IDX.charts.rebal.to} 月度总结（估算）</small></h2><div id="rebal"></div></section>`:"";
-  return `<div id="lvl"></div><div id="rv"></div>`+(window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
+  return `<div id="lvl"></div>`+(window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
   <div class="chips">${["全部",...assets].map(a=>`<button data-a="${esc(a)}" class="${a===sel?"on":""}">${esc(a)}</button>`).join("")}</div>
   <table>${rows.map((r,i)=>`<tr><td class="a">${i>0&&rows[i-1].a===r.a?"":esc(r.a)}</td><td class="d">${r.d.slice(5)}</td><td>${rich(r.x)}<a href="${link(r.b)}" target="_blank" rel="noopener">原文</a></td></tr>`).join("")}</table></section>`;
 }
@@ -293,7 +293,7 @@ async function go(v){
   const m=document.getElementById("main");
   const h=["track","weeks","charts","mind","ps"].includes(v)?v:"d"+v.replace(/-/g,"");
   try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
-  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(window.renderReview)window.renderReview(m.querySelector("#rv"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
+  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
   if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
