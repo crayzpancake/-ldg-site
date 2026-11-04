@@ -17,10 +17,29 @@
 .bd-t th{font-size:12px;color:var(--mute);font-weight:400}
 .bd-t td:first-child,.bd-t th:first-child{text-align:left}
 .bd-sub{font-size:13px;font-weight:700;margin:12px 0 2px}
+.ev-k{display:inline-block;font-size:11px;color:#fff;border-radius:999px;padding:0 6px;margin-right:4px}.ev-k.down{background:#1a9a4a}.ev-k.up{background:#d00}
+.bd-t.ev td{white-space:normal;text-align:left;vertical-align:top}.bd-t.ev td:nth-child(3){white-space:nowrap}
+@media (max-width:640px){.ev-d{display:none}}
 .bd-src{font-size:11.5px;color:var(--mute);margin-top:4px}
 `;
   document.head.appendChild(st);
 
+  function bandChart(host, pts, ev) {
+    const NS = "http://www.w3.org/2000/svg", W = Math.max(300, host.clientWidth), H = 230, m = { l: 44, r: 14, t: 26, b: 26 };
+    const mk = (t, a, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+    host.innerHTML = ""; const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); svg.setAttribute("height", H); host.appendChild(svg);
+    const t0 = Date.parse(pts[0].d), t1 = Date.parse(pts[pts.length - 1].d);
+    const X = d => m.l + (W - m.l - m.r) * ((Date.parse(d) - t0) / ((t1 - t0) || 1));
+    const ys = pts.map(p => p.y), lo = Math.floor(Math.min(...ys) / 100) * 100, hi = Math.ceil(Math.max(...ys) / 100) * 100;
+    const Y = v => m.t + (H - m.t - m.b) * (1 - (v - lo) / ((hi - lo) || 1));
+    const step = (hi - lo) / 4;
+    for (let i = 0; i <= 4; i++) { const v = lo + step * i; mk("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: "var(--line)" }); const t = mk("text", { x: m.l - 6, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--mute)" }); t.textContent = Math.round(v); }
+    ev.forEach((e, i) => { const x1 = Math.max(m.l, X(e.from)), x2 = Math.min(W - m.r, X(e.to)); if (x2 <= m.l || x1 >= W - m.r) return; mk("rect", { x: x1, y: m.t, width: Math.max(4, x2 - x1), height: H - m.t - m.b, fill: e.k === "down" ? "rgba(26,154,74,.16)" : "rgba(221,0,0,.13)" }); const t = mk("text", { x: (x1 + x2) / 2, y: m.t - 8 - (i % 2) * 0, "text-anchor": "middle", "font-size": 10.5, fill: e.k === "down" ? "#1a9a4a" : "#d00", "font-weight": 700 }); t.textContent = (e.k === "down" ? "▼" : "▲") + e.t.replace("10月底–11月初", "10–11月"); });
+    [...new Set(pts.map(p => p.d.slice(0, 7)))].forEach((mo, i) => { const d = mo + "-01"; if (Date.parse(d) < t0 || i % 2) return; const t = mk("text", { x: X(d), y: H - 8, "text-anchor": "middle", "font-size": 11, fill: "var(--mute)" }); t.textContent = (+mo.slice(5) === 1 ? mo.slice(2, 4) + "/" : "") + (+mo.slice(5)) + "月"; });
+    mk("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(p.d).toFixed(1) + "," + Y(p.y).toFixed(1)).join(""), fill: "none", stroke: "#2f6fd6", "stroke-width": 2.2 });
+    pts.forEach(p => { const c = mk("circle", { cx: X(p.d), cy: Y(p.y), r: 3.2, fill: "#2f6fd6" }); const tt = document.createElementNS(NS, "title"); tt.textContent = `${p.d}：${p.y} 亿份`; c.appendChild(tt); });
+    const L = pts[pts.length - 1]; const lt = mk("text", { x: X(L.d) - 6, y: Y(L.y) - 8, "text-anchor": "end", "font-size": 12, "font-weight": 700, fill: "var(--ink)" }); lt.textContent = L.y;
+  }
   const card = (l, v, unit, s) => `<div class="bd-c"><div class="l">${l}</div><div class="v">${v}<small>${unit || ""}</small></div><div class="s">${s || ""}</div></div>`;
 
   window.renderBoard = async function (main, IDX, cache) {
@@ -83,7 +102,9 @@
             <div id="bd-etf-${gi}"></div>
             <details><summary style="font-size:13px;cursor:pointer">看每月底份额表</summary><div style="overflow-x:auto"><table class="bd-t"><tr><th>月份</th>${g.codes.map(c => `<th>${esc(c[1])}</th>`).join("")}<th>合计</th><th>当月变化</th></tr>${R.slice().reverse().map((row, i, a) => { const t = tot(row), p = a[i + 1] ? tot(a[i + 1]) : null; return `<tr><td>${row === R[R.length - 1] && row.ym === last.d.slice(0, 7) ? md(row.d) + "（本月至今）" : row.ym.slice(2).replace("-", "年") + "月"}</td>${g.codes.map(c => `<td>${row.v[c[0]] != null ? row.v[c[0]].toFixed(2) : "—"}</td>`).join("")}<td>${t.toFixed(2)}</td><td>${sg(p != null ? t - p : null, 2)}</td></tr>`; }).join("")}</table></div></details>`;
         }).join("") + `<div class="bd-src">每月取月底最后一个交易日的份额，本月为最新一天；数据来自上交所 ETF 规模日报，每天自动更新。份额增加一般被看作资金流入。</div>`;
-        G.forEach((g, gi) => { const host = etfSec.querySelector(`#bd-etf-${gi}`); const T = R.map(row => ({ d: row.d, y: +g.codes.reduce((a, c) => a + (row.v[c[0]] || 0), 0).toFixed(1) })); if (host && T.length > 2 && window.lineChart) window.lineChart(host, T, { unit: "" }); });
+        G.forEach((g, gi) => { const host = etfSec.querySelector(`#bd-etf-${gi}`); const T = R.map(row => ({ d: row.d, y: +g.codes.reduce((a, c) => a + (row.v[c[0]] || 0), 0).toFixed(1) })); if (host && T.length > 2) bandChart(host, T, gi === 0 ? (M.etf_events || []) : []); });
+        const EV = M.etf_events || [];
+        if (EV.length) { const box = document.createElement("div"); box.innerHTML = `<div class="bd-sub">沪深300 ETF 大额变动</div><table class="bd-t ev"><tr><th>时间</th><th>变动</th><th>份额变化</th><th class="ev-d">说明</th></tr>${EV.slice().reverse().map(e => `<tr><td>${md(e.from)}–${md(e.to)}</td><td><span class="ev-k ${e.k}">${e.k === "down" ? "减持" : "增持"}</span>${esc(e.t.replace(/减持|增持/, ""))}<br><small style="color:var(--mute)">${esc(e.who)}</small></td><td class="${e.k === "down" ? "bd-dn" : "bd-up"}">${esc(e.chg)}</td><td class="ev-d">${esc(e.detail)}</td></tr>`).join("")}</table><div class="bd-src">“减持/增持”指ETF份额大幅减少/增加。国家队不公告每笔操作，减持方是媒体根据基金年报、季报里中央汇金的持仓和每日份额推算的；增持的买方目前未公开。</div>`; const first = etfSec.querySelector("#bd-etf-0"); if (first) first.after(box); }
       } catch (e) { etfSec.innerHTML = `<h2>ETF 份额</h2><div class="empty">暂时读不到，稍后刷新</div>`; }
     })();
     (async () => {
