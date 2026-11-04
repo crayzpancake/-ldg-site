@@ -1,4 +1,4 @@
-// 💬 留言板：每 10 秒自动刷新新留言
+// 💬 留言板：大屏放在右侧空白处，手机上是右下角的“留言”按钮 + 底部抽屉。匿名，不用昵称，每 10 秒自动刷新。
 (function () {
   const API = "/api/comments";
   const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -13,60 +13,101 @@
     get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
   };
-  let items = [], timer = null, last = 0;
+  let items = [], last = 0, re = 0, unread = 0, ok = true;
 
-  function css() {
-    if (document.getElementById("talk-css")) return;
-    const st = document.createElement("style");
-    st.id = "talk-css";
-    st.textContent = `
-#talk .tk-form{display:grid;gap:8px}
-#talk input,#talk textarea{font:inherit;padding:9px 10px;border:1px solid var(--line,#ddd);border-radius:8px;background:transparent;color:inherit;width:100%;box-sizing:border-box}
-#talk textarea{min-height:84px;resize:vertical}
-#talk .tk-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#talk .tk-row input{flex:1;min-width:120px}
-#talk button.tk-send{padding:9px 18px;border:0;border-radius:8px;background:#d92b2b;color:#fff;font-weight:600;cursor:pointer}
-#talk button.tk-send:disabled{opacity:.5}
-#talk .tk-msg{font-size:12px;color:#888;min-height:16px}
-#talk .tk-msg.err{color:#d92b2b}
-#talk .tk-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-#talk .tk-list{display:grid;gap:10px;margin-top:4px}
-#talk .tk-item{padding:10px 12px;border:1px solid var(--line,#eee);border-radius:10px}
-#talk .tk-item.new{animation:tkfade 1.6s ease}
-@keyframes tkfade{from{background:rgba(217,43,43,.12)}to{background:transparent}}
-#talk .tk-h{display:flex;gap:8px;align-items:baseline;font-size:12px;color:#888;margin-bottom:4px}
-#talk .tk-h b{color:inherit;font-size:13px}
-#talk .tk-h .sp{flex:1}
-#talk .tk-h a{color:#888;cursor:pointer;text-decoration:none}
-#talk .tk-t{white-space:pre-wrap;word-break:break-word;line-height:1.6}
-#talk .tk-re{color:#d92b2b;margin-right:4px}
-#talk .tk-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fb344;margin-right:5px;vertical-align:1px}
-#talk .tk-foot{font-size:12px;color:#999;margin-top:10px}
-#talk .tk-foot a{color:#999;cursor:pointer}
-`;
-    document.head.appendChild(st);
-  }
+  const st = document.createElement("style");
+  st.textContent = `
+#tk{position:fixed;z-index:50;background:var(--card,#fff);color:var(--ink,#222);border:1px solid var(--line,#e6e1d9);display:flex;flex-direction:column;font-size:14px;line-height:1.6;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+#tk .tk-hd{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;font-weight:700}
+#tk .tk-hd small{font-weight:400;color:var(--mute,#888);font-size:12px}
+#tk .tk-hd .sp{flex:1}
+#tk .tk-x{display:none;border:0;background:none;color:var(--mute,#888);font-size:20px;cursor:pointer;line-height:1}
+#tk .tk-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fb344;margin-right:4px;vertical-align:1px}
+#tk .tk-list{flex:1;overflow-y:auto;padding:2px 14px 8px;display:flex;flex-direction:column;gap:8px}
+#tk .tk-item{padding:8px 10px;border-radius:10px;background:var(--chip,#f3f0ea)}
+#tk .tk-item.new{animation:tkfade 1.8s ease}
+@keyframes tkfade{from{box-shadow:inset 0 0 0 2px var(--red,#d00)}to{box-shadow:inset 0 0 0 0 transparent}}
+#tk .tk-h{display:flex;gap:6px;font-size:12px;color:var(--mute,#888)}
+#tk .tk-h .sp{flex:1}
+#tk .tk-h a{color:var(--mute,#888);cursor:pointer}
+#tk .tk-t{white-space:pre-wrap;word-break:break-word}
+#tk .tk-re{color:var(--red,#d00);margin-right:4px;cursor:pointer}
+#tk .tk-empty{color:var(--mute,#888);font-size:13px;text-align:center;padding:24px 0}
+#tk form{border-top:1px solid var(--line,#e6e1d9);padding:10px 14px 12px;display:grid;gap:6px}
+#tk .tk-reply{font-size:12px;color:var(--red,#d00);display:none}
+#tk .tk-reply a{color:var(--mute,#888);cursor:pointer;margin-left:6px}
+#tk textarea{font:inherit;padding:8px 10px;border:1px solid var(--line,#ddd);border-radius:8px;background:transparent;color:inherit;resize:none;height:64px;box-sizing:border-box;width:100%}
+#tk .tk-row{display:flex;gap:8px;align-items:center}
+#tk .tk-send{padding:6px 16px;border:0;border-radius:8px;background:var(--red,#d00);color:#fff;font-weight:600;cursor:pointer;font-size:14px}
+#tk .tk-send:disabled{opacity:.5}
+#tk .tk-msg{font-size:12px;color:var(--mute,#888);flex:1}
+#tk .tk-msg.err{color:var(--red,#d00)}
+#tk .tk-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+#tk .tk-ft{font-size:11px;color:var(--mute,#999);padding:0 14px 10px}
+#tk .tk-ft a{color:var(--mute,#999);cursor:pointer}
+#tk .tk-adm input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line,#ddd);border-radius:6px;background:transparent;color:inherit;flex:1}
+#tkbtn{display:none;position:fixed;right:16px;bottom:18px;z-index:49;border:0;border-radius:999px;padding:10px 16px;background:var(--red,#d00);color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
+#tkbtn b{display:none;margin-left:6px;background:#fff;color:var(--red,#d00);border-radius:999px;padding:0 7px;font-size:12px}
+/* 宽屏：放在正文右侧空白处 */
+@media (min-width:1440px){#tk{top:16px;bottom:16px;left:calc(50% + 400px);width:min(340px,calc(50% - 420px));border-radius:14px}}
+/* 中等屏：正文和留言栏一起居中 */
+@media (min-width:1120px) and (max-width:1439px){.wrap{margin-left:calc((100vw - 1100px)/2)!important}#tk{top:16px;bottom:16px;left:calc((100vw - 1100px)/2 + 780px);width:320px;border-radius:14px}}
+/* 手机/窄屏：右下角按钮 + 底部抽屉 */
+@media (max-width:1119px){
+ #tk{left:0;right:0;bottom:0;height:72vh;border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .25s ease}
+ #tk.open{transform:none}
+ #tk .tk-x{display:block}
+ #tkbtn{display:block}
+ #tk.open ~ #tkbtn{display:none}
+}`;
+  document.head.appendChild(st);
+
+  const box = document.createElement("aside");
+  box.id = "tk";
+  box.innerHTML = `
+    <div class="tk-hd">💬 留言板 <small><span class="tk-live"></span>实时 · <span class="tk-n">0</span> 条</small><span class="sp"></span><button class="tk-x" aria-label="收起">×</button></div>
+    <div class="tk-list"><div class="tk-empty">加载中…</div></div>
+    <form autocomplete="off">
+      <div class="tk-reply"></div>
+      <textarea name="text" maxlength="500" placeholder="匿名留言：意见、建议、看法都可以"></textarea>
+      <input class="tk-hp" name="website" tabindex="-1" aria-hidden="true">
+      <div class="tk-row"><span class="tk-msg"></span><button class="tk-send" type="submit">发表</button></div>
+    </form>
+    <div class="tk-ft">匿名发言，请文明，不发广告和他人隐私；不当留言会被删除。 <a class="tk-admin">管理</a></div>
+    <div class="tk-ft tk-adm" hidden><div class="tk-row"><input type="password" placeholder="管理密码"><button class="tk-send" type="button">保存</button></div></div>`;
+  const btn = document.createElement("button");
+  btn.id = "tkbtn";
+  btn.innerHTML = `💬 留言<b></b>`;
+  document.body.append(box, btn);
+
+  const $ = s => box.querySelector(s);
+  const form = $("form"), list = $(".tk-list"), msg = $(".tk-msg");
+  const isDrawer = () => matchMedia("(max-width:1119px)").matches;
+  const setMsg = (t, err) => { msg.textContent = t; msg.className = "tk-msg" + (err ? " err" : ""); };
+  const badge = () => { const b = btn.querySelector("b"); b.textContent = unread; b.style.display = unread ? "inline-block" : "none"; };
 
   function itemHTML(c, isNew) {
     const admin = !!LS.get("ldg_admin");
-    return `<div class="tk-item${isNew ? " new" : ""}" data-id="${esc(c.id)}">
-      <div class="tk-h"><b>${esc(c.name)}</b><span>${fmt(c.ts)}</span><span class="sp"></span>
-        <a data-re="${esc(c.name)}">回复</a>${admin ? ` · <a data-del="${esc(c.id)}">删除</a>` : ""}</div>
-      <div class="tk-t">${c.re ? `<span class="tk-re">@${esc(c.re)}</span>` : ""}${esc(c.text)}</div></div>`;
+    return `<div class="tk-item${isNew ? " new" : ""}">
+      <div class="tk-h"><span>#${c.n || ""}</span><span>${fmt(c.ts)}</span><span class="sp"></span><a data-re="${c.n || ""}">回复</a>${admin ? ` · <a data-del="${esc(c.id)}">删除</a>` : ""}</div>
+      <div class="tk-t">${c.re ? `<span class="tk-re" data-go="${c.re}">回复 #${c.re}</span>` : ""}${esc(c.text)}</div></div>`;
   }
-
   function paint(newIds) {
-    const box = document.querySelector("#talk .tk-list");
-    if (!box) return;
-    const shown = items.slice().reverse();
-    box.innerHTML = shown.length ? shown.map(c => itemHTML(c, newIds && newIds.has(c.id))).join("")
-      : `<div class="empty">还没有留言，来写第一条吧</div>`;
-    const n = document.querySelector("#talk .tk-n");
-    if (n) n.textContent = items.length;
+    const atTop = list.scrollTop < 40;
+    list.innerHTML = items.length ? items.slice().reverse().map(c => itemHTML(c, newIds && newIds.has(c.id))).join("")
+      : `<div class="tk-empty">还没有留言，来写第一条吧</div>`;
+    $(".tk-n").textContent = items.length;
+    if (atTop) list.scrollTop = 0;
+  }
+  function setReply(n) {
+    re = n || 0;
+    const r = $(".tk-reply");
+    r.style.display = re ? "block" : "none";
+    r.innerHTML = re ? `回复 #${re}<a>取消</a>` : "";
+    if (re) form.elements.text.focus();
   }
 
   async function pull(first) {
-    if (!document.getElementById("talk")) { clearInterval(timer); timer = null; return; }
     try {
       const r = await fetch(`${API}?since=${first ? 0 : last}`, { cache: "no-store" });
       if (!r.ok) throw new Error(r.status);
@@ -75,74 +116,53 @@
       if (first) items = j.items; else items.push(...fresh);
       if (j.items.length) last = Math.max(last, ...j.items.map(c => c.ts));
       if (first || fresh.length) paint(first ? null : new Set(fresh.map(c => c.id)));
+      if (!first && fresh.length && isDrawer() && !box.classList.contains("open")) { unread += fresh.length; badge(); }
+      ok = true;
     } catch (e) {
-      if (first) {
-        const box = document.querySelector("#talk .tk-list");
-        if (box) box.innerHTML = `<div class="empty">留言板暂时连不上，请稍后刷新。<br><small>（留言板只在 ludinggongfans.netlify.app 上能用）</small></div>`;
-      }
+      ok = false;
+      if (first) list.innerHTML = `<div class="tk-empty">留言板暂时连不上，请稍后刷新<br><small>（只在 ludinggongfans.netlify.app 上可用）</small></div>`;
     }
   }
 
-  function setMsg(t, err) {
-    const m = document.querySelector("#talk .tk-msg");
-    if (m) { m.textContent = t; m.className = "tk-msg" + (err ? " err" : ""); }
-  }
-
-  async function send(form) {
-    const btn = form.querySelector(".tk-send");
-    const name = form.elements.name.value.trim(), text = form.elements.text.value.trim();
-    if (text.length < 2) return setMsg("内容至少 2 个字", true);
-    btn.disabled = true; setMsg("发送中…");
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const text = form.elements.text.value.trim();
+    if (text.length < 2) return setMsg("至少写 2 个字", true);
+    const sb = $(".tk-send"); sb.disabled = true; setMsg("发送中…");
     try {
-      const r = await fetch(API, {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, text, re: form.dataset.re || "", website: form.elements.website.value }),
-      });
+      const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, re, website: form.elements.website.value }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "发送失败，请稍后再试");
-      LS.set("ldg_name", name);
-      form.elements.text.value = ""; form.dataset.re = ""; form.elements.text.placeholder = "说点什么：意见、建议、看法都可以";
-      if (j.item && !items.some(x => x.id === j.item.id)) { items.push(j.item); last = Math.max(last, j.item.ts); paint(new Set([j.item.id])); }
+      form.elements.text.value = ""; setReply(0);
+      if (j.item && !items.some(x => x.id === j.item.id)) { items.push(j.item); last = Math.max(last, j.item.ts); paint(new Set([j.item.id])); list.scrollTop = 0; }
       setMsg("已发表 ✓");
-    } catch (e) { setMsg(e.message, true); }
-    btn.disabled = false;
-  }
-
-  async function del(id) {
-    const key = LS.get("ldg_admin");
-    const r = await fetch(`${API}?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-admin-key": key } });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) return setMsg(j.error || "删除失败", true);
-    items = items.filter(c => c.id !== id); paint(); setMsg("已删除");
-  }
-
-  window.renderTalk = function (m) {
-    css();
-    m.innerHTML = `<section class="box" id="talk">
-      <h2>💬 留言板 <small><span class="tk-live"></span>实时更新 · 共 <span class="tk-n">0</span> 条</small></h2>
-      <form class="tk-form" autocomplete="off">
-        <div class="tk-row"><input name="name" maxlength="20" placeholder="昵称（可不填，默认“匿名”）" value="${esc(LS.get("ldg_name"))}"></div>
-        <textarea name="text" maxlength="500" placeholder="说点什么：意见、建议、看法都可以"></textarea>
-        <input class="tk-hp" name="website" tabindex="-1" aria-hidden="true">
-        <div class="tk-row"><button class="tk-send" type="submit">发表</button><span class="tk-msg"></span></div>
-      </form>
-      <div class="tk-list"><div class="empty">加载中…</div></div>
-      <div class="tk-foot">请文明发言，不发广告和他人隐私；不当留言会被删除。每人 20 秒内只能发一条，最多 500 字。 <a class="tk-admin">管理</a></div>
-      <div class="tk-adm" hidden><div class="tk-row" style="margin-top:8px"><input type="password" placeholder="管理密码"><button class="tk-send" type="button">保存</button></div></div>
-    </section>`;
-    const form = m.querySelector("form");
-    form.onsubmit = e => { e.preventDefault(); send(form); };
-    m.querySelector(".tk-list").onclick = e => {
-      const re = e.target.dataset.re, d = e.target.dataset.del;
-      if (re) { form.dataset.re = re; form.elements.text.placeholder = `回复 @${re}：`; form.elements.text.focus(); }
-      if (d) del(d);
-    };
-    const adm = m.querySelector(".tk-adm");
-    m.querySelector(".tk-admin").onclick = () => { adm.hidden = !adm.hidden; };
-    adm.querySelector("button").onclick = () => { LS.set("ldg_admin", adm.querySelector("input").value.trim()); adm.hidden = true; paint(); setMsg("管理模式已开启，每条留言旁会出现“删除”"); };
-    items = []; last = 0;
-    pull(true);
-    clearInterval(timer);
-    timer = setInterval(() => pull(false), 10000);
+    } catch (err) { setMsg(err.message, true); }
+    sb.disabled = false;
   };
+  form.elements.text.onkeydown = e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) form.requestSubmit(); };
+
+  list.onclick = async e => {
+    const t = e.target;
+    if (t.dataset.re) setReply(Number(t.dataset.re));
+    if (t.dataset.go) {
+      const i = items.findIndex(c => c.n === Number(t.dataset.go));
+      const el = list.children[items.length - 1 - i];
+      if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); el.classList.remove("new"); void el.offsetWidth; el.classList.add("new"); }
+    }
+    if (t.dataset.del) {
+      const r = await fetch(`${API}?id=${encodeURIComponent(t.dataset.del)}`, { method: "DELETE", headers: { "x-admin-key": LS.get("ldg_admin") } });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return setMsg(j.error || "删除失败", true);
+      items = items.filter(c => c.id !== t.dataset.del); paint(); setMsg("已删除");
+    }
+  };
+  $(".tk-reply").onclick = e => { if (e.target.tagName === "A") setReply(0); };
+  $(".tk-admin").onclick = () => { const a = $(".tk-adm"); a.hidden = !a.hidden; };
+  $(".tk-adm button").onclick = () => { LS.set("ldg_admin", $(".tk-adm input").value.trim()); $(".tk-adm").hidden = true; paint(); setMsg("管理模式已开启"); };
+  btn.onclick = () => { box.classList.add("open"); unread = 0; badge(); };
+  $(".tk-x").onclick = () => box.classList.remove("open");
+
+  pull(true);
+  setInterval(() => { if (!document.hidden) pull(false); }, 10000);
 })();

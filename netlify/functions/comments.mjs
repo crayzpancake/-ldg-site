@@ -4,7 +4,7 @@ import { getStore } from "@netlify/blobs";
 
 export const config = { path: "/api/comments" };
 
-const MAX_LEN = 500, MAX_NAME = 20, KEEP = 2000, GAP_MS = 20000;
+const MAX_LEN = 500, KEEP = 2000, GAP_MS = 20000;
 const J = (o, s = 200) => new Response(JSON.stringify(o), {
   status: s,
   headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
@@ -23,7 +23,7 @@ export default async (req, context) => {
   if (req.method === "GET") {
     const since = Number(url.searchParams.get("since") || 0);
     const items = list.filter(c => !c.hidden && c.ts > since).slice(-300)
-      .map(({ id, ts, name, text, re }) => ({ id, ts, name, text, re }));
+      .map(({ id, n, ts, text, re }) => ({ id, n, ts, text, re }));
     return J({ items, total: list.filter(c => !c.hidden).length });
   }
 
@@ -31,7 +31,6 @@ export default async (req, context) => {
     let b;
     try { b = await req.json(); } catch { return J({ error: "提交格式不对" }, 400); }
     if (b.website) return J({ ok: true });               // 机器人陷阱字段
-    const name = clean(b.name).slice(0, MAX_NAME) || "匿名";
     const text = clean(b.text);
     if (text.length < 2) return J({ error: "内容至少 2 个字" }, 400);
     if (text.length > MAX_LEN) return J({ error: `内容最多 ${MAX_LEN} 字` }, 400);
@@ -45,8 +44,9 @@ export default async (req, context) => {
     rl[who] = now;
     await store.setJSON("rl", rl);
 
-    const re = clean(b.re).slice(0, 12);
-    const c = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), ts: now, name, text, ...(re ? { re } : {}), who };
+    const re = Number(b.re) > 0 ? Math.floor(Number(b.re)) : 0;
+    const n = (list.length ? (list[list.length - 1].n || list.length) : 0) + 1;   // 楼号
+    const c = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), n, ts: now, text, ...(re ? { re } : {}), who };
     list.push(c);
     if (list.length > KEEP) list = list.slice(-KEEP);
     await store.setJSON("list", list);
