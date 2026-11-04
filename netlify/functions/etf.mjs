@@ -8,8 +8,8 @@ async function sse(date) {
   let j; try { j = JSON.parse(t.replace(/^[^{]*\(/, "").replace(/\)\s*$/, "")); } catch (e) { return { raw: t.slice(0, 300) }; }
   return { rows: (j.pageHelp && j.pageHelp.data) || j.result || [] };
 }
-async function range(days, want) {
-  const ds = []; let t = Date.now() + 8 * 3600e3;
+async function range(days, want, to) {
+  const ds = []; let t = to ? Date.parse(to + "T12:00:00Z") : Date.now() + 8 * 3600e3;
   while (ds.length < days) { const d = new Date(t); const w = d.getUTCDay(); if (w && w < 6) ds.push(d.toISOString().slice(0, 10)); t -= 864e5; }
   const res = await Promise.all(ds.map(d => sse(d).catch(() => ({ rows: [] }))));
   const out = [];
@@ -44,7 +44,7 @@ export default async req => {
   }
   if (url.searchParams.get("days")) {
     const want = (url.searchParams.get("s") || "").split(",").filter(x => /^\d{6}$/.test(x)).slice(0, 20);
-    return J({ rows: await range(Math.min(45, +url.searchParams.get("days") || 30), want) });
+    return J({ rows: await range(Math.min(45, +url.searchParams.get("days") || 30), want, url.searchParams.get("to")) });
   }
   const date = url.searchParams.get("date") || new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
   const want = (url.searchParams.get("s") || "").split(",").filter(x => /^\d{6}$/.test(x));
