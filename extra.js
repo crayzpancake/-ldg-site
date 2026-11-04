@@ -108,7 +108,19 @@
   const plain = s => String(s ?? "").replace(/<\/?b>/g, "");
   const md = d => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
   const G = {
-    "仙晶": "他对现金类资产的叫法：可以随时动用的现金、理财等。",
+    "仙晶": "现金。他对现金类资产的叫法。",
+    "正宫": "股票外号：中国神华。",
+    "西宫": "股票外号：中煤能源。",
+    "旧爱": "股票外号：陕西煤业。",
+    "西安电厂": "股票外号：陕西能源。",
+    "绿铝": "股票外号：云铝股份。",
+    "门窗": "股票外号：神火股份。",
+    "易拉罐": "股票外号：中孚实业。",
+    "喷吹": "股票外号：潞安环能。",
+    "类现金": "股票外号：长江电力。",
+    "大水电": "股票外号：长江电力。",
+    "海狗": "股票外号：中远海控。",
+    "猛男": "股票外号：内蒙华电。",
     "游戏仓": "他公开晒持仓、每月做总结的那个账户（也是本站「持仓PS图」统计的账户）。",
     "主仓": "他的另一个主要账户，不公开具体持仓。",
     "某队": "网友对护盘资金（俗称“国家队”）的含蓄说法。",
@@ -202,7 +214,7 @@
 
   window.renderGloss = function () {
     setView(`<section class="box"><h2>📖 术语表 <small>正文里带虚线下划线的词，点一下也能看解释</small></h2>
-      <div class="gl-list">${Object.entries(G).map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join("")}</div>
+      <h3 style="margin:6px 0">股票外号</h3><div class="gl-list">${Object.entries(G).filter(([k, v]) => v.startsWith("股票外号")).map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v.replace("股票外号：", ""))}</div>`).join("")}</div><h3 style="margin:14px 0 6px">常用说法</h3><div class="gl-list">${Object.entries(G).filter(([k, v]) => !v.startsWith("股票外号")).map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join("")}</div>
       <div class="cap">解释是根据他的发言上下文整理的，若有不准确欢迎在留言板指出。</div></section>`);
     try { history.replaceState(null, "", "#gloss"); } catch (e) {}
   };
