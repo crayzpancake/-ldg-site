@@ -134,30 +134,21 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
     ${lastA?tile(lastA.y,"A00铝锭（元/吨）",`${fmtD(lastA.d)} 他发的最新价`):""}
     ${lastC?tile(lastC.y,"动力煤 CCI 5500",`${fmtD(lastC.d)} 他发的最新价`):""}
    </div>
-   ${ch.alloc?`<section class="box"><h2>仓位结构 <small>${ch.alloc.date} 他公布的月度总结${ch.alloc.prev?` · 对比${ch.alloc.prev.date}`:""}</small></h2><div id="c-alloc"></div><div class="cap">${ch.alloc.note||""}</div></section>`:""}
+   ${ch.alloc?`<section class="box"><h2>仓位结构 <small>${ch.alloc.date} 他公布的月度总结（每月随他的月度总结更新）${ch.alloc.prev?` · 对比${ch.alloc.prev.date}`:""}</small></h2><div id="c-alloc"></div><div class="cap">${ch.alloc.note||""}</div></section>`:""}
    <section class="box"><h2>电解铝 A00 铝锭价格 <small>无锡，元/吨 · ${A.length} 个报价日</small></h2><div id="c-alu"></div><div class="cap">他的判断：26年中枢 <b>2.3万上下</b>，27年 <b>2.2–2.3万</b>，后几年大概率守不住 2.4 万。</div></section>
    ${O.length>2?`<section class="box"><h2>氧化铝价格 <small>山西，元/吨</small></h2><div id="c-alo"></div></section>`:""}
    <section class="box"><h2>动力煤 CCI 5500 大卡 <small>元/吨 · ${C.length} 个报价日</small></h2><div id="c-cci"></div><div class="cap">他的判断：这波煤价差不多见顶，但 <b>880 很难跌破</b>。</div></section>
-   ${ch.gold?`<section class="box"><h2>黄金（人民币计价）防线 <small>${ch.gold.date} 他给的位置，元/克</small></h2><div id="c-gold"></div><div class="cap">${ch.gold.note||""}</div></section>`:""}
-   ${ch.cash&&ch.cash.length?`<section class="box"><h2>“仙晶”（可用现金）变化 <small>他自己报的数，单位“个”</small></h2><div id="c-cash"></div><div class="cap">口径不完全一致：有的已扣除10月提现的50个，有的没扣，看趋势即可。</div></section>`:""}
-   <section class="box"><h2>每天发了多少条 <small>只统计投资相关 · 点柱子看当天</small></h2><div id="c-days"></div></section>
-   <section class="box"><h2>话题热度（按周） <small>每格 = 那一周该话题的条数，颜色越深越多</small></h2><div id="c-heat"></div></section>
-   <section class="box"><h2>投资话题占比 <small>全部 ${invTot} 条投资相关微博</small></h2><div id="c-topics"></div></section>
-   <details class="box tbl"><summary>看数据表</summary><div id="c-table"></div></details>
+   ${ch.gold?`<section class="box"><h2>黄金（人民币计价）防线 <small>${ch.gold.date} 他给的位置，元/克 · 现价实时</small></h2><div id="c-gold"></div><div class="cap">${ch.gold.note||""}</div></section>`:""}
   </div>`;
   const draw=()=>{
     if(ch.alloc)hbars(main.querySelector("#c-alloc"),ch.alloc.items,{unit:"%",prev:ch.alloc.prev&&ch.alloc.prev.items});
     if(A.length)lineChart(main.querySelector("#c-alu"),A,{unit:""});
     if(O.length>2)lineChart(main.querySelector("#c-alo"),O,{unit:""});
     if(C.length)lineChart(main.querySelector("#c-cci"),C,{unit:""});
-    if(ch.gold)ladder(main.querySelector("#c-gold"),ch.gold.levels,ch.gold.cur);
-    if(ch.cash&&ch.cash.length)lineChart(main.querySelector("#c-cash"),ch.cash.map(c=>({d:c.d,y:c.v,note:c.note})),{unit:"个",noLine:true});
-    stackBars(main.querySelector("#c-days"),days);
-    heat(main.querySelector("#c-heat"),topics,weeks,(r,c)=>(weekTopic[c]||{})[r]||0,(c,long)=>long?`${fmtD(c)} 那周`:fmtD(c));
-    hbars(main.querySelector("#c-topics"),topics.map(t=>({label:t,v:topicTot[t]})),{unit:" 条"});
+    if(ch.gold)ladder(main.querySelector("#c-gold"),ch.gold.levels,window.__goldNow||ch.gold.cur);
   };
   draw();
-  main.querySelector("#c-table").innerHTML=`<table><tr><td class="a">日期</td><td>A00铝锭</td><td>氧化铝</td><td>CCI5500</td></tr>${[...new Set([...A,...C].map(p=>p.d))].sort().reverse().map(d=>`<tr><td class="d">${fmtD(d)}</td><td>${alu[d]?alu[d].y:""}</td><td>${alo[d]?alo[d].y:""}</td><td>${cci[d]?cci[d].y:""}</td></tr>`).join("")}</table>`;
+  if(ch.gold){fetch("/api/quote?s=nf_AU0").then(r=>r.json()).then(j=>{const q=(j.q||{}).nf_AU0;if(q&&q.px>0&&main.querySelector("#c-gold")){window.__goldNow={name:"现价 "+(q.t||""),v:Math.round(q.px)};ladder(main.querySelector("#c-gold"),ch.gold.levels,window.__goldNow);}}).catch(()=>{});}
   let rt;window.onresize=()=>{clearTimeout(rt);rt=setTimeout(()=>{if(main.querySelector(".viz-root"))draw();},150);};
 };
 })();
