@@ -272,7 +272,7 @@ function trackHTML(){
   const sel=window.__asset||"全部";
   let rows=IDX.tracker.filter(r=>sel==="全部"||r.a===sel).sort((a,b)=>a.a===b.a?b.d.localeCompare(a.d):assets.indexOf(a.a)-assets.indexOf(b.a));
   const rb=(IDX.charts&&IDX.charts.rebal)?`<section class="box viz-root"><h2>10月仓位推算 <small>${IDX.charts.rebal.from} 持仓截图 → ${IDX.charts.rebal.to} 月度总结（估算）</small></h2><div id="rebal"></div></section>`:"";
-  return (window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
+  return `<div id="lvl"></div>`+(window.renderWatch?window.renderWatch(IDX):"")+rb+`<section class="box"><h2>价位 / 仓位追踪 <small>跨天累积，按标的分组，新的在上</small></h2>
   <div class="chips">${["全部",...assets].map(a=>`<button data-a="${esc(a)}" class="${a===sel?"on":""}">${esc(a)}</button>`).join("")}</div>
   <table>${rows.map((r,i)=>`<tr><td class="a">${i>0&&rows[i-1].a===r.a?"":esc(r.a)}</td><td class="d">${r.d.slice(5)}</td><td>${rich(r.x)}<a href="${link(r.b)}" target="_blank" rel="noopener">原文</a></td></tr>`).join("")}</table></section>`;
 }
@@ -282,7 +282,7 @@ async function go(v){
   const m=document.getElementById("main");
   const h=["track","weeks","charts","mind","ps"].includes(v)?v:"d"+v.replace(/-/g,"");
   try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
-  if(v==="track"){m.innerHTML=trackHTML();if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
+  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
   if(v==="charts"){window.renderCharts(m,IDX,getJSON,cache);return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
@@ -307,6 +307,7 @@ async function go(v){
 <script src="charts.js"></script>
 <script src="visual.js"></script>
 <script src="ps.js"></script>
+<script src="levels.js"></script>
 <script src="talk.js"></script>
 </body>
 </html>
