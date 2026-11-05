@@ -1,8 +1,10 @@
 // 今日实时微博：GET 读取；POST（带 x-write-key）写入。存 Netlify Blobs，不需要重新发布网站。
 import { getStore } from "@netlify/blobs";
 export const config = { path: "/api/today" };
-const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type,x-write-key" };
+const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
 export default async req => {
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   const store = getStore({ name: "today", consistency: "strong" });
   if (req.method === "GET") return J((await store.get("day", { type: "json" })) || {});
   if (req.method === "POST") {
