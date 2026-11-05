@@ -46,7 +46,7 @@
 #tk .tk-ft{font-size:10.5px;color:var(--mute,#999);padding:0 12px 8px;line-height:1.4}
 #tk .tk-ft a{color:var(--mute,#999);cursor:pointer}
 #tk .tk-adm input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line,#ddd);border-radius:6px;background:transparent;color:inherit;flex:1}
-#tkbtn{display:none;position:fixed;right:14px;bottom:16px;z-index:49;border:0;border-radius:999px;padding:7px 13px;background:var(--red,#d00);color:#fff;font-weight:700;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
+#tkbtn{display:none;position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:49;border:0;border-radius:999px;padding:10px 16px;background:var(--red,#d00);color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
 #tkbtn b{display:none;margin-left:6px;background:#fff;color:var(--red,#d00);border-radius:999px;padding:0 7px;font-size:12px}
 /* 宽屏：放在正文右侧空白处 */
 @media (min-width:1360px){#tk{top:16px;left:calc(50% + 396px);width:260px;max-height:min(480px,calc(100vh - 32px));border-radius:12px}}
@@ -54,7 +54,7 @@
 @media (min-width:1080px) and (max-width:1359px){.wrap{margin-left:calc((100vw - 1036px)/2)!important}#tk{top:16px;left:calc((100vw - 1036px)/2 + 776px);width:260px;max-height:min(480px,calc(100vh - 32px));border-radius:12px}}
 /* 手机/窄屏：右下角按钮 + 底部抽屉 */
 @media (max-width:1079px){
- #tk{left:0;right:0;bottom:0;height:min(60vh,460px);border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .25s ease}
+ #tk{left:0;right:0;bottom:0;height:min(70vh,520px);padding-bottom:env(safe-area-inset-bottom,0px);border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .25s ease}
  #tk.open{transform:none}
  #tk .tk-x{display:block}
  #tkbtn{display:block}
@@ -160,7 +160,9 @@
   $(".tk-reply").onclick = e => { if (e.target.tagName === "A") setReply(0); };
   $(".tk-admin").onclick = () => { const a = $(".tk-adm"); a.hidden = !a.hidden; };
   $(".tk-adm button").onclick = () => { LS.set("ldg_admin", $(".tk-adm input").value.trim()); $(".tk-adm").hidden = true; paint(); setMsg("管理模式已开启"); };
-  btn.onclick = () => { box.classList.add("open"); unread = 0; badge(); };
+  const open = () => { if (isDrawer()) box.classList.add("open"); else box.scrollIntoView({ block: "nearest" }); unread = 0; badge(); setTimeout(() => form.elements.text.focus({ preventScroll: true }), 300); };
+  window.openTalk = open;
+  btn.onclick = open;
   $(".tk-x").onclick = () => box.classList.remove("open");
 
   pull(true);
