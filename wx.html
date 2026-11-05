@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>公众号文章生成 · 超级鹿鼎公微博汇总</title>
+<link rel="icon" href="icon.png">
+<style>
+body{margin:0;background:#f3f3f1;font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#222}
+.bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e5e2;padding:10px 14px}
+.bar h1{font-size:16px;margin:0 0 6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row select,.row button{font-size:14px;padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer}
+.row button.main{background:#07c160;color:#fff;border-color:#07c160;font-weight:600}
+.meta{max-width:680px;margin:12px auto;padding:0 14px}
+.meta .f{background:#fff;border:1px solid #e5e5e2;border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.meta .f b{display:block;font-size:13px;color:#888;margin-bottom:2px}
+.meta .f div{font-size:15px}
+.meta ol{margin:6px 0 0 18px;padding:0;font-size:13px;color:#555}
+#art{max-width:680px;margin:0 auto 40px;background:#fff;padding:20px 16px;border:1px solid #e5e5e2;border-radius:8px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>📝 公众号文章生成</h1>
+  <div class="row">
+    <select id="day"></select>
+    <button id="cT">复制标题</button>
+    <button id="cS">复制摘要</button>
+    <button id="cA" class="main">复制正文</button>
+  </div>
+</div>
+<div class="meta">
+  <div class="f"><b>标题（64字以内）</b><div id="tt"></div></div>
+  <div class="f"><b>摘要（120字以内）</b><div id="ss"></div></div>
+  <div class="f"><b>怎么发</b><ol>
+    <li>电脑上打开公众号后台 mp.weixin.qq.com →「新的创作」→「文章」</li>
+    <li>点上面「复制标题」，粘贴到标题栏；点「复制正文」，在正文区 Ctrl+V / ⌘V 粘贴（格式会保留）</li>
+    <li>摘要栏粘贴「复制摘要」；封面可用网站图标或任意配图</li>
+    <li>最下面勾选「原文链接」，填 <b>https://ludinggongfans.netlify.app</b>，读者点「阅读原文」就能看图表和价位追踪</li>
+    <li>预览确认后群发</li>
+  </ol></div>
+</div>
+<div id="art">读取中…</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+const SITE="https://ludinggongfans.netlify.app";
+const RED="#c0392b";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// 只保留 <b>，并改成公众号能保留的内联样式
+const rich=s=>esc(s).replace(/&lt;b&gt;/g,`<strong style="color:${RED};font-weight:bold;">`).replace(/&lt;\/b&gt;/g,"</strong>").replace(/\n/g,"<br>");
+const plain=s=>String(s==null?"":s).replace(/<[^>]+>/g,"");
+const md=d=>{const[,m,dd]=d.split("-");return `${+m}月${+dd}日`;};
+const getJSON=u=>fetch(u+(u.includes("?")?"&":"?")+"v="+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json();});
+const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1800);};
+
+const P=`margin:0 0 12px;font-size:15px;line-height:1.75;color:#333;letter-spacing:0.5px;`;
+const H2=t=>`<section style="margin:26px 0 12px;"><span style="display:inline-block;border-left:4px solid ${RED};padding-left:8px;font-size:17px;font-weight:bold;color:#222;">${t}</span></section>`;
+let TITLE="",SUM="";
+
+async function build(date,IDX){
+  const D=await getJSON(`data/${date}.json`);
+  const hl=(D.highlights||[]);
+  const first=plain(hl[0]||"").replace(/^［[^］]*］/,"");
+  const cut=first.split(/[，；。,]/)[0].replace(/[“”"]/g,"");
+  TITLE=`鹿公微博汇总｜${md(date)}：${cut.length>28?cut.slice(0,28)+"…":cut}`;
+  SUM=hl.slice(0,3).map(h=>plain(h).replace(/^［[^］]*］/,"").replace(/[。；]+$/,"")).join("；");if(SUM.length>118)SUM=SUM.slice(0,117)+"…";
+  $("tt").textContent=TITLE;$("ss").textContent=SUM;
+
+  const watch=(IDX.watch||[]).filter(w=>w.d===date);
+  let h="";
+  h+=`<section style="background:#f7f7f5;border-radius:6px;padding:10px 12px;margin:0 0 16px;font-size:13px;line-height:1.7;color:#888;">感谢鹿公一直以来的无私分享 🙏 本文是一位读者整理的回看笔记，并非 @挖地瓜的超级鹿鼎公 本人运营。文字和观点都属于鹿公，这里只是把他${md(date)}（${esc(D.weekday||"")}）公开分享的投资相关微博按时间归拢，方便没空追微博的朋友。想看原汁原味，欢迎去微博关注他。</section>`;
+  h+=H2("今日要点");
+  h+=hl.map(x=>{const m=x.match(/^［([^］]*)］/);const tag=m?m[1]:"";const body=m?x.slice(m[0].length):x;
+    return `<p style="${P}">${tag?`<span style="display:inline-block;background:${tag.includes("🎯")?RED:"#eef3fa"};color:${tag.includes("🎯")?"#fff":"#2a5d9f"};font-size:12px;padding:0 6px;border-radius:3px;margin-right:6px;">${esc(tag)}</span>`:""}${rich(body)}</p>`;}).join("");
+  if(watch.length){
+    h+=H2("🎯 想买 / 加仓清单的变化");
+    h+=watch.map(w=>`<p style="${P}"><strong style="color:#222;">${esc(w.name)}</strong>　<span style="color:#888;font-size:13px;">${esc(w.st||"")}</span><br>${w.lv?`<span style="font-size:14px;color:#555;">价位/条件：${esc(w.lv)}</span><br>`:""}<span style="font-size:14px;">${rich(w.x||"")}</span></p>`).join("");
+  }
+  h+=H2(`全部发言（${(D.posts||[]).length} 条）`);
+  h+=(D.posts||[]).map(p=>{
+    let s=`<section style="margin:0 0 16px;padding-bottom:12px;border-bottom:1px dashed #e5e5e2;">`;
+    s+=`<p style="margin:0 0 4px;font-size:13px;color:#999;">${esc(p.t)}　<span style="color:#2a5d9f;">${esc(p.c||"")}</span></p>`;
+    if(p.q)s+=`<p style="margin:0 0 6px;font-size:14px;line-height:1.7;color:#888;">问 ${rich(p.q)}</p>`;
+    s+=`<p style="${P}margin-bottom:6px;">${p.q?"答：":""}${rich(p.x)}</p>`;
+    if(p.src)s+=`<section style="background:#f7f7f5;border-left:3px solid #ddd;padding:6px 10px;margin:4px 0 0;font-size:14px;line-height:1.7;color:#666;">${esc(p.src.u||"")}：${rich(p.src.x||"")}</section>`;
+    if(p.note)s+=`<p style="margin:6px 0 0;font-size:13px;color:#999;">注：${rich(p.note)}</p>`;
+    return s+`</section>`;}).join("");
+  h+=`<section style="margin:24px 0 0;padding:12px;border:1px solid #eee;border-radius:6px;font-size:14px;line-height:1.8;color:#555;text-align:center;">📊 煤价、ETF 份额图表、他提过的价位追踪、持仓推测<br>点左下角 <strong style="color:${RED};">「阅读原文」</strong> 查看完整汇总网站<br><span style="font-size:13px;color:#999;">${SITE.replace("https://","")}</span></section>`;
+  h+=`<p style="margin:16px 0 0;font-size:12px;line-height:1.7;color:#aaa;text-align:center;">内容整理自博主公开微博，如有出入以原微博为准<br>仅作信息整理，不构成任何投资建议</p>`;
+  $("art").innerHTML=h;
+}
+
+async function copyText(t){try{await navigator.clipboard.writeText(t);}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();}toast("已复制");}
+function copyRich(){
+  const el=$("art");
+  try{
+    if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+      navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([el.innerHTML],{type:"text/html"}),"text/plain":new Blob([el.innerText],{type:"text/plain"})})]).then(()=>toast("正文已复制，去公众号编辑器粘贴"),fallback);
+      return;
+    }
+  }catch(e){}
+  fallback();
+  function fallback(){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);const ok=document.execCommand("copy");s.removeAllRanges();toast(ok?"正文已复制，去公众号编辑器粘贴":"复制失败，请手动全选正文复制");}
+}
+
+(async()=>{
+  let IDX;
+  try{IDX=await getJSON("data/index.json");}catch(e){$("art").textContent="数据读取失败，请刷新";return;}
+  const days=IDX.days.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const q=new URLSearchParams(location.search).get("d");
+  const sel=$("day");
+  sel.innerHTML=days.map(d=>`<option value="${d.date}">${md(d.date)} ${d.weekday||""}（${d.count}条）</option>`).join("");
+  sel.value=days.some(d=>d.date===q)?q:days[0].date;
+  sel.onchange=()=>{history.replaceState(null,"","?d="+sel.value);build(sel.value,IDX).catch(()=>$("art").textContent="这一天读取失败");};
+  $("cT").onclick=()=>copyText(TITLE);
+  $("cS").onclick=()=>copyText(SUM);
+  $("cA").onclick=copyRich;
+  build(sel.value,IDX).catch(()=>$("art").textContent="这一天读取失败");
+})();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "超级鹿鼎公微博汇总",
+  "short_name": "鹿公汇总",
+  "description": "每日整理他的微博要点、持仓变化和关键价位",
+  "start_url": "/?src=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c0392b",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -207,8 +207,8 @@
     d.innerHTML = `感谢鹿公一直以来的无私分享 🙏 这里是一位读者整理的回看笔记，并非 @挖地瓜的超级鹿鼎公 本人运营。文字和观点都属于鹿公，这里只是把他公开分享的投资内容按日期归拢，方便没空追微博的朋友。想看原汁原味、和鹿公交流，欢迎去 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">他的微博</a> 关注支持。鹿公如果觉得有任何不妥，留言一句，马上调整或下线。`;
     const l = document.createElement("div");
     l.className = "hdr-links";
-    l.innerHTML = `<a data-go="news">🆕 更新说明<span class="dot"></span></a><a data-go="gloss">📖 术语表</a>`;
-    l.onclick = e => { const a = e.target.closest("a"); if (!a) return; if (a.dataset.go === "news") window.renderNews(); else window.renderGloss(); };
+    l.innerHTML = `<a data-go="news">🆕 更新说明<span class="dot"></span></a><a data-go="gloss">📖 术语表</a><a data-go="app">📲 放到手机桌面</a>`;
+    l.onclick = e => { const a = e.target.closest("a"); if (!a) return; if (a.dataset.go === "news") window.renderNews(); else if (a.dataset.go === "app") window.renderApp(); else window.renderGloss(); };
     h.appendChild(d); h.appendChild(l);
   }
 
@@ -217,6 +217,24 @@
       <h3 style="margin:6px 0">股票外号</h3><div class="gl-list">${Object.entries(G).filter(([k, v]) => v.startsWith("股票外号")).map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v.replace("股票外号：", ""))}</div>`).join("")}</div><h3 style="margin:14px 0 6px">常用说法</h3><div class="gl-list">${Object.entries(G).filter(([k, v]) => !v.startsWith("股票外号")).map(([k, v]) => `<div><b>${esc(k)}</b>${esc(v)}</div>`).join("")}</div>
       <div class="cap">解释是根据他的发言上下文整理的，若有不准确欢迎在留言板指出。</div></section>`);
     try { history.replaceState(null, "", "#gloss"); } catch (e) {}
+  };
+
+  // 📲 放到手机桌面
+  let deferred = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; });
+  window.renderApp = function () {
+    const ua = navigator.userAgent, wx = /MicroMessenger/i.test(ua), ios = /iPhone|iPad|iPod/i.test(ua);
+    const inApp = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    setView(`<section class="box"><h2>📲 放到手机桌面 <small>像 App 一样一点就开，不用下载安装</small></h2>
+      ${inApp ? `<div class="ps-why">✅ 你已经是从桌面图标打开的，不用再添加。</div>` : ""}
+      ${wx ? `<div class="ps-why">你现在在微信里：先点右上角 <b>···</b> → <b>在浏览器打开</b>（苹果手机选「在 Safari 中打开」），再按下面的步骤。</div>` : ""}
+      ${deferred ? `<p><button id="inst" style="font-size:16px;padding:8px 16px">➕ 一键添加到桌面</button></p>` : ""}
+      <h3 style="margin:10px 0 4px">🍎 苹果手机（Safari）</h3><ol><li>用 Safari 打开本站</li><li>点底部的 <b>分享</b> 按钮（方框加向上箭头）</li><li>往下找 <b>添加到主屏幕</b> → 右上角 <b>添加</b></li></ol>
+      <h3 style="margin:10px 0 4px">🤖 安卓手机</h3><ol><li>用 Chrome、Edge 或手机自带浏览器打开本站</li><li>点右上角 <b>⋮</b> 或底部 <b>菜单</b></li><li>选 <b>添加到主屏幕</b> / <b>安装应用</b> / <b>添加到桌面</b>（不同浏览器叫法不同）</li></ol>
+      <div class="cap">桌面图标打开的就是这个网站，内容每天自动更新，和网页版完全一样。</div></section>`);
+    const b = document.getElementById("inst");
+    if (b) b.onclick = async () => { deferred.prompt(); await deferred.userChoice; deferred = null; window.renderApp(); };
+    try { history.replaceState(null, "", "#app"); } catch (e) {}
   };
 
   // 🆕 更新说明
