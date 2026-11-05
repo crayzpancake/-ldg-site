@@ -241,7 +241,7 @@ function tabs(){
 function mark(v){const k=/^\d/.test(v)?"day":v;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));}
 function daybar(v){
   const i=IDX.days.findIndex(d=>d.date===v);
-  const opts=IDX.days.map(d=>`<option value="${d.date}"${d.date===v?" selected":""}>${d.date.slice(5).replace("-","月")}日 ${d.weekday||""} · ${d.count}条（投资${d.inv??"?"}）</option>`).join("");
+  const opts=IDX.days.map(d=>`<option value="${d.date}"${d.date===v?" selected":""}>${d.date.slice(5).replace("-","月")}日 ${d.weekday||""} · ${d.count}条${d.live?"（今天·实时更新中）":""}</option>`).join("");
   return `<div class="daybar"><button data-step="1" ${i>=IDX.days.length-1?"disabled":""} aria-label="前一天">‹</button><select id="daysel">${opts}</select><button data-step="-1" ${i<=0?"disabled":""} aria-label="后一天">›</button></div>`;
 }
 function wireDaybar(v){
@@ -302,13 +302,15 @@ async function go(v){
   if(v==="ps"){window.renderPS(m,getJSON);return;}
   if(v==="method"){window.renderMethod();return;}
   m.innerHTML=daybar(v)+`<div class="empty">加载中…</div>`; wireDaybar(v);
-  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});} }
+  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+(cache[v].live?`<div class="ps-why">⏱ 今天的微博实时更新中（约每小时一次），最近更新 ${cache[v].updated?new Date(cache[v].updated).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Shanghai"}):""}；第二天早上会整理成完整版。</div>`:"")+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});} }
   catch(e){ m.innerHTML=daybar(v)+`<div class="empty">这一天的数据读取失败，请稍后刷新</div>`; wireDaybar(v); }
 }
 
 (async()=>{
   try{ IDX=await getJSON("data/index.json"); }catch(e){document.getElementById("main").innerHTML=`<div class="empty">数据读取失败，请刷新</div>`;return;}
   IDX.days.sort((a,b)=>b.date.localeCompare(a.date));
+  try{const T=await fetch("/api/today",{cache:"no-store"}).then(r=>r.json());
+    if(T&&T.date&&T.posts&&T.posts.length&&(!IDX.days[0]||T.date>IDX.days[0].date)){T.live=true;cache[T.date]=T;IDX.days.unshift({date:T.date,weekday:T.weekday||"",count:T.posts.length,inv:T.posts.length,live:true});}}catch(e){}
   tabs();
   const h=location.hash.slice(1);
   window.__goDay=d=>go(d);
