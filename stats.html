@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>后台 · 在线人数</title>
+<style>
+body{margin:0;background:#f3f3f1;font:15px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#222}
+.w{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:18px;margin:4px 0 12px}
+.big{background:#fff;border:1px solid #e5e5e2;border-radius:10px;padding:16px;text-align:center;margin-bottom:12px}
+.big .n{font-size:56px;font-weight:700;color:#c0392b;line-height:1.1}
+.big .s{color:#888;font-size:13px}
+.row{display:flex;gap:10px;margin-bottom:12px}.row .big{flex:1;margin:0}.row .n{font-size:30px;color:#2a5d9f}
+table{width:100%;background:#fff;border:1px solid #e5e5e2;border-radius:10px;border-collapse:separate;border-spacing:0;overflow:hidden}
+td,th{padding:7px 12px;border-bottom:1px solid #f0f0ee;text-align:left;font-size:14px}th{color:#888;font-weight:500}
+td.bar span{display:inline-block;height:10px;background:#9ec5f4;border-radius:0 4px 4px 0;vertical-align:middle;margin-right:6px}
+.login{background:#fff;border:1px solid #e5e5e2;border-radius:10px;padding:16px}
+input{font-size:16px;padding:8px;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:6px;margin:8px 0}
+button{font-size:15px;padding:8px 14px;border:0;border-radius:6px;background:#07c160;color:#fff}
+.err{color:#c0392b;font-size:14px}.cap{color:#999;font-size:12px;margin-top:10px}
+</style></head><body><div class="w">
+<h1>📈 后台 · 访客统计 <small id="tm" style="color:#999;font-size:13px;font-weight:400"></small></h1>
+<div id="v"></div>
+<div class="cap">在线 = 最近 2 分钟内页面开着且在前台的人（每 60 秒报一次）。访客按设备算（同一手机同一浏览器算 1 人），不记录 IP 或任何个人信息。本页每 30 秒自动刷新，网站上不显示人数，也没有链接到这里。</div>
+</div>
+<script>
+const V=document.getElementById("v");let K="";try{K=localStorage.getItem("ldg_admin")||"";}catch(e){}
+function login(msg){V.innerHTML=`<div class="login">输入管理密码（就是你在 Netlify 设置的 ADMIN_KEY）<input id="k" type="password" autocomplete="current-password"><button id="go">进入</button> <span class="err">${msg||""}</span></div>`;
+  document.getElementById("go").onclick=()=>{K=document.getElementById("k").value.trim();try{localStorage.setItem("ldg_admin",K);}catch(e){}load();};}
+async function load(){
+  if(!K)return login();
+  let r,j;try{r=await fetch("/api/online",{headers:{"x-admin-key":K},cache:"no-store"});j=await r.json();}catch(e){V.innerHTML=`<div class="err">读取失败，稍后自动重试</div>`;return;}
+  if(!r.ok){if(r.status===403){try{localStorage.removeItem("ldg_admin");}catch(e){}K="";}return login(j.error);}
+  document.getElementById("tm").textContent="北京时间 "+j.now;
+  const mx=Math.max(1,...j.days.map(d=>d.uv));
+  V.innerHTML=`<div class="big"><div class="n">${j.online}</div><div class="s">现在在线</div></div>
+   <div class="row"><div class="big"><div class="n">${j.online5}</div><div class="s">近 5 分钟来过</div></div><div class="big"><div class="n">${j.app}</div><div class="s">在线中从桌面图标打开的</div></div></div>
+   <table><tr><th>日期</th><th>当天访客</th></tr>${j.days.map((d,i)=>`<tr><td>${d.d.slice(5).replace("-","/")}${i===0?" 今天":""}</td><td class="bar"><span style="width:${Math.round(d.uv/mx*160)}px"></span>${d.uv}</td></tr>`).join("")}</table>`;
+}
+load();setInterval(()=>{if(K)load();},30000);
+</script></body></html>
