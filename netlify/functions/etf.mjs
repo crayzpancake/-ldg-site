@@ -60,7 +60,7 @@ async function monthly(n, sh, sz) {
         const v = pick(r.rows, sh);
         if (Object.keys(v).length || !sh.length) {
           // 深交所：取该月内最近一次记录
-          sz.forEach(c => { const dd = Object.keys(H).filter(x => x <= ds && x.slice(0, 7) === ds.slice(0, 7) && H[x][c] != null).sort().pop(); if (dd) v[c] = H[dd][c]; });
+          sz.forEach(c => { const dd = Object.keys(H).filter(x => (i === 0 || x <= ds) && x.slice(0, 7) === ds.slice(0, 7) && H[x][c] != null).sort().pop(); if (dd) v[c] = H[dd][c]; });
           if (Object.keys(v).length) return { d: ds, ym: ds.slice(0, 7), v };
         }
       }
