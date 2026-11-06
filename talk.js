@@ -31,6 +31,9 @@
 #tk .tk-h .sp{flex:1}
 #tk .tk-h a{color:var(--mute,#888);cursor:pointer}
 #tk .tk-t{white-space:pre-wrap;word-break:break-word}
+#tk .tk-item.adm{background:#fdecec;border-left:3px solid var(--red,#d00)}
+#tk .tk-item.adm .tk-t{color:var(--red,#d00);font-weight:600}
+#tk .tk-badge{background:var(--red,#d00);color:#fff;border-radius:4px;padding:0 5px;font-size:10px;font-weight:700}
 #tk .tk-re{color:var(--red,#d00);margin-right:4px;cursor:pointer}
 #tk .tk-empty{color:var(--mute,#888);font-size:13px;text-align:center;padding:24px 0}
 #tk form{border-top:1px solid var(--line,#e6e1d9);padding:8px 12px 8px;display:grid;gap:5px}
@@ -88,8 +91,8 @@
 
   function itemHTML(c, isNew) {
     const admin = !!LS.get("ldg_admin");
-    return `<div class="tk-item${isNew ? " new" : ""}">
-      <div class="tk-h"><span>#${c.n || ""}</span><span>${fmt(c.ts)}</span><span class="sp"></span><a data-re="${c.n || ""}">回复</a>${admin ? ` · <a data-del="${esc(c.id)}">删除</a>` : ""}</div>
+    return `<div class="tk-item${isNew ? " new" : ""}${c.admin ? " adm" : ""}">
+      <div class="tk-h"><span>#${c.n || ""}</span>${c.admin ? `<span class="tk-badge">管理员</span>` : ""}<span>${fmt(c.ts)}</span><span class="sp"></span><a data-re="${c.n || ""}">回复</a>${admin ? ` · <a data-del="${esc(c.id)}">删除</a>` : ""}</div>
       <div class="tk-t">${c.re ? `<span class="tk-re" data-go="${c.re}">回复 #${c.re}</span>` : ""}${esc(c.text)}</div></div>`;
   }
   function paint(newIds) {
@@ -130,7 +133,8 @@
     if (text.length < 2) return setMsg("至少写 2 个字", true);
     const sb = $(".tk-send"); sb.disabled = true; setMsg("发送中…");
     try {
-      const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" },
+      const hd = { "content-type": "application/json" }; if (LS.get("ldg_admin")) hd["x-admin-key"] = LS.get("ldg_admin");
+      const r = await fetch(API, { method: "POST", headers: hd,
         body: JSON.stringify({ text, re, website: form.elements.website.value }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "发送失败，请稍后再试");

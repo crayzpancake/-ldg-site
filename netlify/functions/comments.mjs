@@ -23,7 +23,7 @@ export default async (req, context) => {
   if (req.method === "GET") {
     const since = Number(url.searchParams.get("since") || 0);
     const items = list.filter(c => !c.hidden && c.ts > since).slice(-300)
-      .map(({ id, n, ts, text, re }) => ({ id, n, ts, text, re }));
+      .map(({ id, n, ts, text, re, admin }) => ({ id, n, ts, text, re, ...(admin ? { admin: 1 } : {}) }));
     return J({ items, total: list.filter(c => !c.hidden).length });
   }
 
@@ -37,16 +37,19 @@ export default async (req, context) => {
     if ((text.match(/https?:\/\//g) || []).length > 2) return J({ error: "链接太多了" }, 400);
 
     const now = Date.now();
+    const akey = Netlify.env.get("ADMIN_KEY"), hk = req.headers.get("x-admin-key");
+    if (hk && (!akey || hk !== akey)) return J({ error: "管理密码不对，请在「管理」里重新输入" }, 403);
+    const admin = !!(akey && hk === akey);
     const who = await hash(context.ip || req.headers.get("x-nf-client-connection-ip") || "?");
     const rl = (await store.get("rl", { type: "json" })) || {};
-    if (rl[who] && now - rl[who] < GAP_MS) return J({ error: "发得太快了，20 秒后再试" }, 429);
+    if (!admin && rl[who] && now - rl[who] < GAP_MS) return J({ error: "发得太快了，20 秒后再试" }, 429);
     for (const k in rl) if (now - rl[k] > 3600e3) delete rl[k];
     rl[who] = now;
     await store.setJSON("rl", rl);
 
     const re = Number(b.re) > 0 ? Math.floor(Number(b.re)) : 0;
     const n = (list.length ? (list[list.length - 1].n || list.length) : 0) + 1;   // 楼号
-    const c = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), n, ts: now, text, ...(re ? { re } : {}), who };
+    const c = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), n, ts: now, text, ...(re ? { re } : {}), ...(admin ? { admin: 1 } : {}), who };
     list.push(c);
     if (list.length > KEEP) list = list.slice(-KEEP);
     await store.setJSON("list", list);
