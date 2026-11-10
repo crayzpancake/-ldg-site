@@ -25,9 +25,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,
 header h1{font-size:21px;margin:2px 0 0}
 header .sub{color:var(--mute);font-size:13px}
 .motto{margin:0 0 10px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#fff1ef,#fff8f2);border:1px solid #f3d2cc;text-align:center}
-.motto b{display:block;color:var(--red,#d00);font-size:clamp(17px,4.6vw,22px);letter-spacing:3px;line-height:1.4}
-.motto b i{font-style:normal;display:inline-block;white-space:nowrap}
-.motto span{display:block;color:var(--mute);font-size:12px;margin-top:2px}
+.motto .mg{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;text-align:left}
+@media (min-width:760px){.motto .mg{grid-template-columns:repeat(4,1fr)}}
+.motto .mg b{display:block;color:var(--red,#d00);font-size:17px;letter-spacing:2px;line-height:1.35}
+.motto .mg em{display:block;font-style:normal;color:var(--ink,#333);font-size:12px;line-height:1.5;opacity:.8}
+.motto span{text-align:center;display:block;color:var(--mute);font-size:12px;margin-top:2px}
 @media (prefers-color-scheme:dark){.motto{background:#2a1f1e;border-color:#4a2c28}}
 b,.k{color:var(--red);font-weight:700}
 nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 4px;margin:6px 0 4px}
@@ -222,7 +224,12 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 <div style="display:none"><img src="og.png" alt="超级鹿鼎公微博汇总"></div>
 <div class="wrap">
 <header>
-<div class="motto"><b><i>价值选股　趋势选时</i>　<i>估值定仓　波动降本</i></b><span>—— 鹿公的十六字投资理念</span></div>
+<div class="motto"><div class="mg">
+<div><b>价值选股</b><em>选看得懂、现金流好、高分红、有壁垒的优质公司</em></div>
+<div><b>趋势选时</b><em>不盲目抄底，结合宏观、流动性、市场拐点择时</em></div>
+<div><b>估值定仓</b><em>估值越低，仓位越重；估值高就降仓、不重仓</em></div>
+<div><b>波动降本</b><em>持仓基础上利用震荡做波段，摊薄持仓成本</em></div>
+</div><span>—— 鹿公的十六字投资理念</span></div>
 <h1>超级鹿鼎公微博汇总</h1>
 <div class="sub">@挖地瓜的超级鹿鼎公 · 9月1日起 · 红色 = 重点 · 「问」是网友，「答」是他</div>
 </header>
