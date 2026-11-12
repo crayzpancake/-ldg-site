@@ -25,15 +25,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,
 .wrap{max-width:760px;margin:0 auto;padding:16px 14px 64px}
 header h1{font-size:21px;margin:2px 0 0}
 header .sub{color:var(--mute);font-size:13px}
-.motto{margin:8px 0 6px;padding:7px 12px;border-radius:10px;background:linear-gradient(90deg,#fff1ef,#fff8f2);border:1px solid #f3d2cc}
-.motto summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}.motto summary::-webkit-details-marker{display:none}
-.motto summary b{color:var(--red,#d00);font-size:16px;letter-spacing:1px}
-.motto summary span{color:var(--mute);font-size:12px}
-.motto .mg{margin:8px 0 4px}
+.motto{margin:0 0 10px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#fff1ef,#fff8f2);border:1px solid #f3d2cc;text-align:center}
 .motto .mg{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;text-align:left}
 @media (min-width:760px){.motto .mg{grid-template-columns:repeat(4,1fr)}}
 .motto .mg b{display:block;color:var(--red,#d00);font-size:17px;letter-spacing:2px;line-height:1.35}
 .motto .mg em{display:block;font-style:normal;color:var(--ink,#333);font-size:12px;line-height:1.5;opacity:.8}
+.motto span{text-align:center;display:block;color:var(--mute);font-size:12px;margin-top:2px}
 @media (prefers-color-scheme:dark){.motto{background:#2a1f1e;border-color:#4a2c28}}
 b,.k{color:var(--red);font-weight:700}
 nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 4px;margin:6px 0 4px}
@@ -228,18 +225,18 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 <div style="display:none"><img src="og.png" alt="超级鹿鼎公微博汇总"></div>
 <div class="wrap">
 <header>
-<h1>超级鹿鼎公微博汇总</h1>
-<div class="sub">@挖地瓜的超级鹿鼎公 · 读者整理的回看笔记，非本人运营</div>
-<details class="motto"><summary><b>价值选股 · 趋势选时 · 估值定仓 · 波动降本</b><span>鹿公的十六字投资理念 · 点开看解释</span></summary><div class="mg">
+<div class="motto"><div class="mg">
 <div><b>价值选股</b><em>选看得懂、现金流好、高分红、有壁垒的优质公司</em></div>
 <div><b>趋势选时</b><em>不盲目抄底，结合宏观、流动性、市场拐点择时</em></div>
 <div><b>估值定仓</b><em>估值越低，仓位越重；估值高就降仓、不重仓</em></div>
 <div><b>波动降本</b><em>持仓基础上利用震荡做波段，摊薄持仓成本</em></div>
-</div></details>
+</div><span>—— 鹿公的十六字投资理念</span></div>
+<h1>超级鹿鼎公微博汇总</h1>
+<div class="sub">@挖地瓜的超级鹿鼎公 · 9月1日起 · 红色 = 重点 · 「问」是网友，「答」是他</div>
 </header>
 <nav class="tabs" id="tabs"></nav>
 <main id="main"><div class="empty">加载中…</div></main>
-<div class="foot">感谢鹿公一直以来的无私分享 🙏 本站是一位读者整理的回看笔记，并非 @挖地瓜的超级鹿鼎公 本人运营，文字和观点都属于鹿公；想看原汁原味，欢迎去 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">他的微博</a> 关注支持。鹿公如果觉得有任何不妥，留言一句，马上调整或下线。只收投资相关内容，转发的他人长文只节选，不构成任何投资建议。</div>
+<div class="foot">数据来自他在微博、雪球的公开发言，只收投资相关内容，每天自动更新。转发的他人长文只节选，点「原文」看全文。</div>
 </div>
 <script>
 const ORDER=["持仓与收益","黄金白银","电解铝","煤炭","铜","水电","火电","券商银行","利率与宏观","市场与大盘","方法论","其他个股","投资圈"];
@@ -347,7 +344,6 @@ async function go(v){
   if(h==="news"&&window.renderNews){window.renderNews();return;}
   if(h==="gloss"&&window.renderGloss){window.renderGloss();return;}
   if(h==="app"&&window.renderApp){window.renderApp();return;}
-  if(h==="guide"&&window.renderGuidePage){window.renderGuidePage();return;}
   else if(/^d\d{8}$/.test(h)){const d=h.slice(1,5)+"-"+h.slice(5,7)+"-"+h.slice(7);if(IDX.days.some(x=>x.date===d))start=d;}
   if(/^s=/.test(h)&&window.doSearch){window.doSearch(decodeURIComponent(h.slice(2)));return;}
   go(start);

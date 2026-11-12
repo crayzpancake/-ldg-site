@@ -10,7 +10,7 @@
 
   const css = document.createElement("style");
   css.textContent = `
-.upd{font-size:13px;color:var(--mute)}.upd b{color:var(--ink,#222)}.upd .late{color:var(--red,#d00)}
+.upd{margin:6px 0 0;font-size:13px;color:var(--mute)}.upd b{color:var(--ink,#222)}.upd .late{color:var(--red,#d00)}
 .ops-m{margin:14px 0 6px;font-weight:700}
 .ops{border-left:2px solid var(--line,#e6e1d9);margin-left:6px;padding-left:12px}
 .ops .it{position:relative;margin:0 0 10px}
@@ -36,9 +36,9 @@
     const now = new Date(Date.now() + 8 * 3600e3), today = now.toISOString().slice(0, 10);
     const lag = Math.round((new Date(today) - new Date(d0)) / 864e5);
     const wd = WD[new Date(d0 + "T12:00:00+08:00").getDay()];
-    const el = document.createElement("span"); el.className = "upd";
-    el.innerHTML = ` · 📅 已更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">更新稍有延迟</span>` : ""}`;
-    const sub = h.querySelector(".sub"); sub ? sub.appendChild(el) : h.querySelector("h1").after(el);
+    const el = document.createElement("div"); el.className = "upd";
+    el.innerHTML = `📅 内容已更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">· 最近几天更新稍有延迟，会尽快补上</span>` : ""}`;
+    const sub = h.querySelector(".sub"); (sub || h.querySelector("h1")).after(el);
   };
 
   // ---------- 📝 操作日志 ----------
@@ -126,13 +126,13 @@
   const LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
   const css = document.createElement("style");
   css.textContent = `
-
+.guide{margin:0 0 10px;border:1px solid var(--line,#e6e1d9);border-radius:12px;background:var(--card,#fff);padding:0 12px}
 .guide summary{cursor:pointer;padding:9px 0;font-weight:700;list-style:none}.guide summary::-webkit-details-marker{display:none}
 .guide summary:after{content:"展开 ▾";float:right;font-weight:400;font-size:12px;color:var(--mute)}.guide[open] summary:after{content:"收起 ▴"}
 .guide a[data-g]{color:var(--red,#d00);text-decoration:underline;text-underline-offset:2px}
-.guide ol{margin:6px 0 6px 18px;padding:0;font-size:14px;line-height:1.7}.guide li{margin:2px 0}.guide a{cursor:pointer}
-.quote{margin:0 0 4px;padding:5px 10px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
-.quote small{color:var(--mute);font-size:12px;margin-left:4px}`;
+.guide ol{margin:0 0 10px 18px;padding:0;font-size:14px;line-height:1.7}.guide li{margin:2px 0}.guide a{cursor:pointer}
+.quote{margin:-4px 0 10px;padding:8px 12px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
+.quote small{display:block;color:var(--mute);font-size:12px;margin-top:2px}`;
   document.head.appendChild(css);
 
   // ---------- 栏目点开次数（只记次数，不记任何个人信息） ----------
@@ -147,14 +147,11 @@
   });
 
   // ---------- 👋 新手导读 ----------
-  window.renderGuide = function () {};
-  window.renderGuidePage = function () {
-    window.hit("guide");
-    document.querySelectorAll("#tabs button").forEach(b => b.classList.remove("on"));
-    try { history.replaceState(null, "", "#guide"); } catch (e) {}
-    const m = document.getElementById("main");
-    const d = document.createElement("section"); d.className = "box guide";
-    d.innerHTML = `<h2>👋 第一次来？30 秒看懂这个网站</h2><ol>
+  window.renderGuide = function () {
+    const h = document.querySelector("header"); if (!h || h.querySelector(".guide")) return;
+    const first = !LS.get("ldg_seen");
+    const d = document.createElement("details"); d.className = "guide"; if (first) d.open = true;
+    d.innerHTML = `<summary>👋 第一次来？30 秒看懂这个网站</summary><ol>
       <li><b>这是什么</b>：一位读者把 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a>（大家叫他鹿公、老舅）每天公开分享的<b>投资相关微博</b>按日期整理在这里，不是他本人运营。他主要聊煤炭、电力、电解铝、黄金这些高分红行业。</li>
       <li><b>怎么读</b>：<b style="color:var(--red,#d00)">红色加粗</b>是重点；「问」是网友的提问，「答」是他的回复；每条都有「原文」链接，可以回微博看。</li>
       <li><b>看不懂外号</b>：正宫、旧爱、绿铝这类是他给股票起的外号，正文里带虚线的词点一下就有解释，也可以看 <a data-g="gloss">📖 术语表</a>。</li>
@@ -168,7 +165,9 @@
       if (g === "gloss") window.renderGloss(); else if (g === "app") window.renderApp(); else if (g === "talk") window.openTalk && window.openTalk(); else window.__go && window.__go(g);
       document.getElementById("tabs")?.scrollIntoView({ behavior: "smooth" });
     });
-    m.innerHTML = ""; m.appendChild(d);
+    d.addEventListener("toggle", () => { if (d.open) window.hit("guide"); });
+    const m = h.querySelector(".motto"); (m || h.firstChild).after ? (m ? m.after(d) : h.prepend(d)) : h.prepend(d);
+    LS.set("ldg_seen", "1");
   };
 
   // ---------- 💬 每日一句 ----------
@@ -188,7 +187,7 @@
     const n = Math.floor(new Date(today) / 864e5);
     const q = pool[n % pool.length];
     const el = document.createElement("div"); el.className = "quote";
-    el.innerHTML = `💬 “${esc(q.t)}”<small>—— 鹿公 ${+q.d.slice(5, 7)}/${+q.d.slice(8, 10)} <a href="${window.postLink ? window.postLink(q.b, q.s) : "#"}" target="_blank" rel="noopener">原文</a></small>`;
-    const g = h.querySelector(".motto"); g ? g.after(el) : h.appendChild(el);
+    el.innerHTML = `💬 <b>今日一句</b>：“${esc(q.t)}”<small>—— 鹿公 ${+q.d.slice(5, 7)}/${+q.d.slice(8, 10)} · <a href="${window.postLink ? window.postLink(q.b, q.s) : "#"}" target="_blank" rel="noopener">原文</a> · 每天换一句</small>`;
+    const g = h.querySelector(".guide") || h.querySelector(".motto"); g ? g.after(el) : h.prepend(el);
   };
 })();
