@@ -38,7 +38,7 @@
     const wd = WD[new Date(d0 + "T12:00:00+08:00").getDay()];
     const el = document.createElement("div"); el.className = "upd";
     el.innerHTML = `📅 内容已更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">· 最近几天更新稍有延迟，会尽快补上</span>` : ""}`;
-    const sub = h.querySelector(".sub"); (sub || h.querySelector("h1")).after(el);
+    const sr = h.querySelector(".srch"); sr ? sr.before(el) : h.appendChild(el);
   };
 
   // ---------- 📝 操作日志 ----------
@@ -127,8 +127,7 @@
   const css = document.createElement("style");
   css.textContent = `
 .guide{margin:0 0 10px;border:1px solid var(--line,#e6e1d9);border-radius:12px;background:var(--card,#fff);padding:0 12px}
-.guide summary{cursor:pointer;padding:9px 0;font-weight:700;list-style:none}.guide summary::-webkit-details-marker{display:none}
-.guide summary:after{content:"展开 ▾";float:right;font-weight:400;font-size:12px;color:var(--mute)}.guide[open] summary:after{content:"收起 ▴"}
+.guide .gt{padding:9px 0 2px;font-weight:700}
 .guide a[data-g]{color:var(--red,#d00);text-decoration:underline;text-underline-offset:2px}
 .guide ol{margin:0 0 10px 18px;padding:0;font-size:14px;line-height:1.7}.guide li{margin:2px 0}.guide a{cursor:pointer}
 .quote{margin:-4px 0 10px;padding:8px 12px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
@@ -150,8 +149,8 @@
   window.renderGuide = function () {
     const h = document.querySelector("header"); if (!h || h.querySelector(".guide")) return;
     const first = !LS.get("ldg_seen");
-    const d = document.createElement("details"); d.className = "guide"; if (first) d.open = true;
-    d.innerHTML = `<summary>👋 第一次来？30 秒看懂这个网站</summary><ol>
+    const d = document.createElement("div"); d.className = "guide";
+    d.innerHTML = `<div class="gt">👋 第一次来？30 秒看懂这个网站</div><ol>
       <li><b>这是什么</b>：一位读者把 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a>（大家叫他鹿公、老舅）每天公开分享的<b>投资相关微博</b>按日期整理在这里，不是他本人运营。他主要聊煤炭、电力、电解铝、黄金这些高分红行业。</li>
       <li><b>怎么读</b>：<b style="color:var(--red,#d00)">红色加粗</b>是重点；「问」是网友的提问，「答」是他的回复；每条都有「原文」链接，可以回微博看。</li>
       <li><b>看不懂外号</b>：正宫、旧爱、绿铝这类是他给股票起的外号，正文里带虚线的词点一下就有解释，也可以看 <a data-g="gloss">📖 术语表</a>。</li>
@@ -165,7 +164,6 @@
       if (g === "gloss") window.renderGloss(); else if (g === "app") window.renderApp(); else if (g === "talk") window.openTalk && window.openTalk(); else window.__go && window.__go(g);
       document.getElementById("tabs")?.scrollIntoView({ behavior: "smooth" });
     });
-    d.addEventListener("toggle", () => { if (d.open) window.hit("guide"); });
     const m = h.querySelector(".motto"); (m || h.firstChild).after ? (m ? m.after(d) : h.prepend(d)) : h.prepend(d);
     LS.set("ldg_seen", "1");
   };
