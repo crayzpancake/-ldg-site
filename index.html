@@ -14,6 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta itemprop="name" content="超级鹿鼎公微博汇总"><meta itemprop="image" content="https://ludinggongfans.netlify.app/og.png">
 <link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
+<link rel="alternate" type="application/rss+xml" title="超级鹿鼎公微博汇总" href="/rss.xml">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#c0392b">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="鹿公汇总"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
@@ -250,14 +251,14 @@ async function getJSON(p){const r=await fetch(p,{cache:"no-cache"});if(!r.ok)thr
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button>`;
+  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
 function mark(v){const k=/^\d/.test(v)?"day":v;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));}
 function daybar(v){
   const i=IDX.days.findIndex(d=>d.date===v);
   const opts=IDX.days.map(d=>`<option value="${d.date}"${d.date===v?" selected":""}>${d.date.slice(5).replace("-","月")}日 ${d.weekday||""} · ${d.count}条${d.live?"（今天·实时更新中）":""}</option>`).join("");
-  return `<div class="daybar"><button data-step="1" ${i>=IDX.days.length-1?"disabled":""} aria-label="前一天">‹</button><select id="daysel">${opts}</select><button data-step="-1" ${i<=0?"disabled":""} aria-label="后一天">›</button></div>`;
+  return `<div class="daybar"><button data-step="1" ${i>=IDX.days.length-1?"disabled":""} aria-label="前一天">‹</button><select id="daysel">${opts}</select><button data-step="-1" ${i<=0?"disabled":""} aria-label="后一天">›</button>${IDX.days[i]&&!IDX.days[i].live?`<button class="shr" onclick="window.shareDay('${v}')">🔗 分享</button>`:""}</div>`;
 }
 function wireDaybar(v){
   const m=document.getElementById("main");
@@ -308,8 +309,11 @@ function trackHTML(){
 async function go(v){
   cur=v; mark(v);
   const m=document.getElementById("main");
-  const h=["track","weeks","charts","mind","ps","method"].includes(v)?v:"d"+v.replace(/-/g,"");
-  try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}
+  const h=["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,"");
+  if(v!=="stock"){try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}}
+  if(v==="ops"){window.renderOps(m,IDX);return;}
+  if(v==="month"){window.renderMonthly(m,IDX);return;}
+  if(v==="stock"){window.renderStock(m,IDX,window.__stockStart);window.__stockStart=null;return;}
   if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
   if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderQuick)window.renderQuick(m,IDX);if(cur==="charts"&&window.renderBoard)window.renderBoard(m,IDX,cache);if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
@@ -326,11 +330,14 @@ async function go(v){
   IDX.days.sort((a,b)=>b.date.localeCompare(a.date));
   try{const T=await fetch("/api/today",{cache:"no-store"}).then(r=>r.json());
     if(T&&T.date&&T.posts&&T.posts.length&&(!IDX.days[0]||T.date>IDX.days[0].date)){T.live=true;cache[T.date]=T;IDX.days.unshift({date:T.date,weekday:T.weekday||"",count:T.posts.length,inv:T.posts.length,live:true});}}catch(e){}
+  window.__IDX=IDX;window.__cache=cache;window.__getJSON=getJSON;
   tabs();
+  if(window.renderUpdated)window.renderUpdated(IDX);
   const h=location.hash.slice(1);
   window.__goDay=d=>go(d);
   let start="charts";
-  if(["track","weeks","charts","mind","ps","method"].includes(h))start=h;
+  if(["track","weeks","charts","mind","ps","method","ops","month","stock"].includes(h))start=h;
+  if(/^stock=/.test(h)){window.__stockStart=decodeURIComponent(h.slice(6));start="stock";}
   if(h==="news"&&window.renderNews){window.renderNews();return;}
   if(h==="gloss"&&window.renderGloss){window.renderGloss();return;}
   if(h==="app"&&window.renderApp){window.renderApp();return;}
@@ -343,6 +350,7 @@ async function go(v){
 <script src="visual.js"></script>
 <script src="ps.js"></script>
 <script src="extra.js"></script>
+<script src="more.js"></script>
 <script src="board.js"></script>
 <script src="levels.js"></script>
 <script src="talk.js"></script>

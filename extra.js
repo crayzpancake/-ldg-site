@@ -231,7 +231,7 @@
       ${deferred ? `<p><button id="inst" style="font-size:16px;padding:8px 16px">➕ 一键添加到桌面</button></p>` : ""}
       <h3 style="margin:10px 0 4px">🍎 苹果手机（Safari）</h3><ol><li>用 Safari 打开本站</li><li>点底部的 <b>分享</b> 按钮（方框加向上箭头）</li><li>往下找 <b>添加到主屏幕</b> → 右上角 <b>添加</b></li></ol>
       <h3 style="margin:10px 0 4px">🤖 安卓手机</h3><ol><li>用 Chrome、Edge 或手机自带浏览器打开本站</li><li>点右上角 <b>⋮</b> 或底部 <b>菜单</b></li><li>选 <b>添加到主屏幕</b> / <b>安装应用</b> / <b>添加到桌面</b>（不同浏览器叫法不同）</li></ol>
-      <div class="cap">桌面图标打开的就是这个网站，内容每天自动更新，和网页版完全一样。</div></section>`);
+      <div class="cap">桌面图标打开的就是这个网站，内容每天自动更新，和网页版完全一样。</div><h3 style="margin:14px 0 4px">📡 用 RSS 阅读器订阅</h3><p>用 Feedly、Inoreader、Reeder 等阅读器的朋友，添加这个地址，每天更新会自动推给你：<br><code>https://ludinggongfans.netlify.app/rss.xml</code></p></section>`);
     const b = document.getElementById("inst");
     if (b) b.onclick = async () => { deferred.prompt(); await deferred.userChoice; deferred = null; window.renderApp(); };
     try { history.replaceState(null, "", "#app"); } catch (e) {}
