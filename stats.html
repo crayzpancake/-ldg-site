@@ -25,6 +25,8 @@ button{font-size:15px;padding:8px 14px;border:0;border-radius:6px;background:#07
 const V=document.getElementById("v");let K="";try{K=localStorage.getItem("ldg_admin")||"";}catch(e){}
 function login(msg){V.innerHTML=`<div class="login">输入管理密码（就是你在 Netlify 设置的 ADMIN_KEY）<input id="k" type="password" autocomplete="current-password"><button id="go">进入</button> <span class="err">${msg||""}</span></div>`;
   document.getElementById("go").onclick=()=>{K=document.getElementById("k").value.trim();try{localStorage.setItem("ldg_admin",K);}catch(e){}load();};}
+const VN={charts:"📊 图表",day:"📰 每日微博",weeks:"📅 每周要点",mind:"🧠 观点导图",ps:"🗂 持仓PS图",method:"📚 方法论",track:"📌 价位/仓位追踪",ops:"📝 操作日志",stock:"🔎 按股票看",month:"🗓 月度总结",search:"🔍 搜索",news:"🆕 更新说明",gloss:"📖 术语表",app:"📲 放到桌面",talk:"💬 留言板",guide:"👋 新手导读",share:"🔗 分享"};
+function viewsHTML(v){if(!v)return"";const a=Object.entries(v).sort((x,y)=>y[1][1]-x[1][1]);if(!a.length)return`<div class="cap">各栏目点开次数：还没有数据</div>`;const mx=Math.max(1,...a.map(x=>x[1][1]));return`<h2 style="font-size:16px;margin:16px 0 8px">各栏目点开次数</h2><table><tr><th>栏目</th><th>今天</th><th>近7天</th></tr>${a.map(([k,[t,w]])=>`<tr><td>${VN[k]||k}</td><td>${t}</td><td class="bar"><span style="width:${Math.round(w/mx*120)}px"></span>${w}</td></tr>`).join("")}</table>`;}
 async function load(){
   if(!K)return login();
   let r,j;try{r=await fetch("/api/online",{headers:{"x-admin-key":K},cache:"no-store"});j=await r.json();}catch(e){V.innerHTML=`<div class="err">读取失败，稍后自动重试</div>`;return;}
@@ -33,7 +35,7 @@ async function load(){
   const mx=Math.max(1,...j.days.map(d=>d.uv));
   V.innerHTML=`<div class="big"><div class="n">${j.online}</div><div class="s">现在在线</div></div>
    <div class="row"><div class="big"><div class="n">${j.online5}</div><div class="s">近 5 分钟来过</div></div><div class="big"><div class="n">${j.app}</div><div class="s">在线中从桌面图标打开的</div></div></div>
-   <table><tr><th>日期</th><th>当天访客</th></tr>${j.days.map((d,i)=>`<tr><td>${d.d.slice(5).replace("-","/")}${i===0?" 今天":""}</td><td class="bar"><span style="width:${Math.round(d.uv/mx*160)}px"></span>${d.uv}</td></tr>`).join("")}</table>`;
+   <table><tr><th>日期</th><th>当天访客</th></tr>${j.days.map((d,i)=>`<tr><td>${d.d.slice(5).replace("-","/")}${i===0?" 今天":""}</td><td class="bar"><span style="width:${Math.round(d.uv/mx*160)}px"></span>${d.uv}</td></tr>`).join("")}</table>`+viewsHTML(j.views);
 }
 load();setInterval(()=>{if(K)load();},30000);
 </script></body></html>

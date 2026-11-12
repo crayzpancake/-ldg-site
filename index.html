@@ -307,7 +307,7 @@ function trackHTML(){
 }
 
 async function go(v){
-  cur=v; mark(v);
+  cur=v; mark(v); if(window.hit)window.hit(/^\d/.test(v)?"day":v);
   const m=document.getElementById("main");
   const h=["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,"");
   if(v!=="stock"){try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}}
@@ -332,7 +332,10 @@ async function go(v){
     if(T&&T.date&&T.posts&&T.posts.length&&(!IDX.days[0]||T.date>IDX.days[0].date)){T.live=true;cache[T.date]=T;IDX.days.unshift({date:T.date,weekday:T.weekday||"",count:T.posts.length,inv:T.posts.length,live:true});}}catch(e){}
   window.__IDX=IDX;window.__cache=cache;window.__getJSON=getJSON;
   tabs();
+  window.__go=go;
   if(window.renderUpdated)window.renderUpdated(IDX);
+  if(window.renderGuide)window.renderGuide();
+  if(window.renderQuote)window.renderQuote(IDX);
   const h=location.hash.slice(1);
   window.__goDay=d=>go(d);
   let start="charts";
@@ -350,10 +353,10 @@ async function go(v){
 <script src="visual.js"></script>
 <script src="ps.js"></script>
 <script src="extra.js"></script>
-<script src="more.js"></script>
 <script src="board.js"></script>
 <script src="levels.js"></script>
 <script src="talk.js"></script>
+<script src="more.js"></script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
 <script>(function(){let sid;try{sid=localStorage.getItem("ldg_sid");if(!sid){sid=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("ldg_sid",sid);}}catch(e){sid=Math.random().toString(36).slice(2)+Date.now().toString(36);}
 const app=matchMedia("(display-mode: standalone)").matches||navigator.standalone?1:0;

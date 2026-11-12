@@ -118,3 +118,76 @@
     document.body.appendChild(t); setTimeout(() => t.remove(), 2000);
   };
 })();
+
+// 👋 新手导读、💬 每日一句、栏目点开次数
+(function () {
+  const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const plain = s => String(s ?? "").replace(/<\/?b>/g, "");
+  const LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const css = document.createElement("style");
+  css.textContent = `
+.guide{margin:0 0 10px;border:1px solid var(--line,#e6e1d9);border-radius:12px;background:var(--card,#fff);padding:0 12px}
+.guide summary{cursor:pointer;padding:9px 0;font-weight:700;list-style:none}.guide summary::-webkit-details-marker{display:none}
+.guide summary:after{content:"展开 ▾";float:right;font-weight:400;font-size:12px;color:var(--mute)}.guide[open] summary:after{content:"收起 ▴"}
+.guide a[data-g]{color:var(--red,#d00);text-decoration:underline;text-underline-offset:2px}
+.guide ol{margin:0 0 10px 18px;padding:0;font-size:14px;line-height:1.7}.guide li{margin:2px 0}.guide a{cursor:pointer}
+.quote{margin:-4px 0 10px;padding:8px 12px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
+.quote small{display:block;color:var(--mute);font-size:12px;margin-top:2px}`;
+  document.head.appendChild(css);
+
+  // ---------- 栏目点开次数（只记次数，不记任何个人信息） ----------
+  const last = {};
+  window.hit = function (v) {
+    const now = Date.now(); if (last[v] && now - last[v] < 30000) return; last[v] = now;
+    try { fetch("/api/hit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ v }), keepalive: true }).catch(() => {}); } catch (e) {}
+  };
+  ["renderNews:news", "renderGloss:gloss", "renderApp:app", "doSearch:search", "openTalk:talk", "shareDay:share"].forEach(p => {
+    const [fn, v] = p.split(":"); const f = window[fn]; if (typeof f !== "function") return;
+    window[fn] = function () { window.hit(v); return f.apply(this, arguments); };
+  });
+
+  // ---------- 👋 新手导读 ----------
+  window.renderGuide = function () {
+    const h = document.querySelector("header"); if (!h || h.querySelector(".guide")) return;
+    const first = !LS.get("ldg_seen");
+    const d = document.createElement("details"); d.className = "guide"; if (first) d.open = true;
+    d.innerHTML = `<summary>👋 第一次来？30 秒看懂这个网站</summary><ol>
+      <li><b>这是什么</b>：一位读者把 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a>（大家叫他鹿公、老舅）每天公开分享的<b>投资相关微博</b>按日期整理在这里，不是他本人运营。他主要聊煤炭、电力、电解铝、黄金这些高分红行业。</li>
+      <li><b>怎么读</b>：<b style="color:var(--red,#d00)">红色加粗</b>是重点；「问」是网友的提问，「答」是他的回复；每条都有「原文」链接，可以回微博看。</li>
+      <li><b>看不懂外号</b>：正宫、旧爱、绿铝这类是他给股票起的外号，正文里带虚线的词点一下就有解释，也可以看 <a data-g="gloss">📖 术语表</a>。</li>
+      <li><b>最想知道他买什么</b>：看 <a data-g="track">📌 价位/仓位追踪</a>（他想买、想加仓的票和他提过的价位）和 <a data-g="ops">📝 操作日志</a>（他说过的买卖动作）。</li>
+      <li><b>只想快速看</b>：<a data-g="charts">📊 图表</a>页最上面的「⚡30秒速览」，或 <a data-g="weeks">📅 每周要点</a>、<a data-g="month">🗓 月度总结</a>。</li>
+      <li><b>找某只股票</b>：用 <a data-g="stock">🔎 按股票看</a>，外号也能一起搜到；或者在上面的搜索框里搜关键词。</li>
+      <li><b>每天更新</b>：每晚 11 点左右整理当天内容。可以 <a data-g="app">📲 放到手机桌面</a>，有意见欢迎在 <a data-g="talk">💬 留言板</a> 说。</li>
+      <li>这里只是整理他公开说过的话，<b>不构成任何投资建议</b>。</li></ol>`;
+    d.addEventListener("click", e => {
+      const a = e.target.closest("[data-g]"); if (!a) return; e.preventDefault(); const g = a.dataset.g;
+      if (g === "gloss") window.renderGloss(); else if (g === "app") window.renderApp(); else if (g === "talk") window.openTalk && window.openTalk(); else window.__go && window.__go(g);
+      document.getElementById("tabs")?.scrollIntoView({ behavior: "smooth" });
+    });
+    d.addEventListener("toggle", () => { if (d.open) window.hit("guide"); });
+    const m = h.querySelector(".motto"); (m || h.firstChild).after ? (m ? m.after(d) : h.prepend(d)) : h.prepend(d);
+    LS.set("ldg_seen", "1");
+  };
+
+  // ---------- 💬 每日一句 ----------
+  window.renderQuote = async function (IDX) {
+    const h = document.querySelector("header"); if (!h || h.querySelector(".quote")) return;
+    const days = IDX.days.filter(d => !d.live).slice(0, 20);
+    const all = await Promise.all(days.map(d => window.__cache[d.date] || window.__getJSON(`data/${d.date}.json`).then(j => (window.__cache[d.date] = j)).catch(() => null)));
+    const pool = [];
+    all.filter(Boolean).forEach(D => D.posts.forEach(p => {
+      if (p.c !== "方法论" || p.src || p.q) return;
+      const t = plain(p.x).replace(/\s+/g, " ").trim();
+      if (t.length >= 8 && t.length <= 60 && !/配图|网页链接|@/.test(t) && (t.match(/\d/g) || []).length <= 2) pool.push({ t, d: D.date, b: p.b, s: p.s });
+    }));
+    if (!pool.length) return;
+    pool.sort((a, b) => (a.d + a.b).localeCompare(b.d + b.b));
+    const today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+    const n = Math.floor(new Date(today) / 864e5);
+    const q = pool[n % pool.length];
+    const el = document.createElement("div"); el.className = "quote";
+    el.innerHTML = `💬 <b>今日一句</b>：“${esc(q.t)}”<small>—— 鹿公 ${+q.d.slice(5, 7)}/${+q.d.slice(8, 10)} · <a href="${window.postLink ? window.postLink(q.b, q.s) : "#"}" target="_blank" rel="noopener">原文</a> · 每天换一句</small>`;
+    const g = h.querySelector(".guide") || h.querySelector(".motto"); g ? g.after(el) : h.prepend(el);
+  };
+})();
