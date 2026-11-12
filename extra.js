@@ -201,15 +201,12 @@
 
   // 页头：声明 + 链接
   function header() {
-    const h = document.querySelector("header"); if (!h || h.querySelector(".disc")) return;
-    const d = document.createElement("div");
-    d.className = "disc";
-    d.innerHTML = `感谢鹿公一直以来的无私分享 🙏 这里是一位读者整理的回看笔记，并非 @挖地瓜的超级鹿鼎公 本人运营。文字和观点都属于鹿公，这里只是把他公开分享的投资内容按日期归拢，方便没空追微博的朋友。想看原汁原味、和鹿公交流，欢迎去 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">他的微博</a> 关注支持。鹿公如果觉得有任何不妥，留言一句，马上调整或下线。`;
+    const h = document.querySelector("header"); if (!h || h.querySelector(".hdr-links")) return;
     const l = document.createElement("div");
     l.className = "hdr-links";
-    l.innerHTML = `<a data-go="news">🆕 更新说明<span class="dot"></span></a><a data-go="gloss">📖 术语表</a><a data-go="app">📲 放到手机桌面</a><a data-go="talk">💬 留言板</a>`;
+    l.innerHTML = `<a data-go="news">🆕 更新说明<span class="dot"></span></a><a data-go="gloss">📖 术语表</a>`;
     l.onclick = e => { const a = e.target.closest("a"); if (!a) return; if (a.dataset.go === "news") window.renderNews(); else if (a.dataset.go === "app") window.renderApp(); else if (a.dataset.go === "talk") { window.openTalk && window.openTalk(); } else window.renderGloss(); };
-    h.appendChild(d); h.appendChild(l);
+    h.appendChild(l);
   }
 
   window.renderGloss = function () {

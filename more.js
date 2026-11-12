@@ -10,7 +10,7 @@
 
   const css = document.createElement("style");
   css.textContent = `
-.upd{margin:6px 0 0;font-size:13px;color:var(--mute)}.upd b{color:var(--ink,#222)}.upd .late{color:var(--red,#d00)}
+.upd{font-size:12.5px;color:var(--mute);white-space:nowrap}.upd b{color:var(--ink,#222)}.upd .late{color:var(--red,#d00)}
 .ops-m{margin:14px 0 6px;font-weight:700}
 .ops{border-left:2px solid var(--line,#e6e1d9);margin-left:6px;padding-left:12px}
 .ops .it{position:relative;margin:0 0 10px}
@@ -36,9 +36,9 @@
     const now = new Date(Date.now() + 8 * 3600e3), today = now.toISOString().slice(0, 10);
     const lag = Math.round((new Date(today) - new Date(d0)) / 864e5);
     const wd = WD[new Date(d0 + "T12:00:00+08:00").getDay()];
-    const el = document.createElement("div"); el.className = "upd";
-    el.innerHTML = `📅 内容已更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">· 最近几天更新稍有延迟，会尽快补上</span>` : ""}`;
-    const sr = h.querySelector(".srch"); sr ? sr.before(el) : h.appendChild(el);
+    const el = document.createElement("span"); el.className = "upd";
+    el.innerHTML = `📅 更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">· 最近几天更新稍有延迟，会尽快补上</span>` : ""}`;
+    const lk = h.querySelector(".hdr-links"); if (lk) { el.style.marginLeft = "auto"; el.style.alignSelf = "center"; lk.appendChild(el); } else h.appendChild(el);
   };
 
   // ---------- 📝 操作日志 ----------
@@ -129,9 +129,9 @@
 .guide{margin:0 0 10px;border:1px solid var(--line,#e6e1d9);border-radius:12px;background:var(--card,#fff);padding:0 12px}
 .guide .gt{padding:9px 0 2px;font-weight:700}
 .guide a[data-g]{color:var(--red,#d00);text-decoration:underline;text-underline-offset:2px}
-.guide ol{margin:0 0 10px 18px;padding:0;font-size:14px;line-height:1.7}.guide li{margin:2px 0}.guide a{cursor:pointer}
-.quote{margin:-4px 0 10px;padding:8px 12px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
-.quote small{display:block;color:var(--mute);font-size:12px;margin-top:2px}`;
+.guide ol{margin:4px 0 8px 18px;padding:0;font-size:13.5px;line-height:1.65}.guide li{margin:2px 0}.guide a{cursor:pointer}
+.quote{margin:0 0 8px;padding:6px 10px;font-size:13.5px;border-left:3px solid var(--red,#d00);background:var(--chip,#f6f3ee);border-radius:0 10px 10px 0;font-size:14px;line-height:1.6}
+.quote small{color:var(--mute);font-size:12px;margin-left:4px}`;
   document.head.appendChild(css);
 
   // ---------- 栏目点开次数（只记次数，不记任何个人信息） ----------
@@ -150,15 +150,12 @@
     const h = document.querySelector("header"); if (!h || h.querySelector(".guide")) return;
     const first = !LS.get("ldg_seen");
     const d = document.createElement("div"); d.className = "guide";
-    d.innerHTML = `<div class="gt">👋 第一次来？30 秒看懂这个网站</div><ol>
-      <li><b>这是什么</b>：一位读者把 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a>（大家叫他鹿公、老舅）每天公开分享的<b>投资相关微博</b>按日期整理在这里，不是他本人运营。他主要聊煤炭、电力、电解铝、黄金这些高分红行业。</li>
-      <li><b>怎么读</b>：<b style="color:var(--red,#d00)">红色加粗</b>是重点；「问」是网友的提问，「答」是他的回复；每条都有「原文」链接，可以回微博看。</li>
-      <li><b>看不懂外号</b>：正宫、旧爱、绿铝这类是他给股票起的外号，正文里带虚线的词点一下就有解释，也可以看 <a data-g="gloss">📖 术语表</a>。</li>
-      <li><b>最想知道他买什么</b>：看 <a data-g="track">📌 价位/仓位追踪</a>（他想买、想加仓的票和他提过的价位）和 <a data-g="ops">📝 操作日志</a>（他说过的买卖动作）。</li>
-      <li><b>只想快速看</b>：<a data-g="charts">📊 图表</a>页最上面的「⚡30秒速览」，或 <a data-g="weeks">📅 每周要点</a>、<a data-g="month">🗓 月度总结</a>。</li>
-      <li><b>找某只股票</b>：用 <a data-g="stock">🔎 按股票看</a>，外号也能一起搜到；或者在上面的搜索框里搜关键词。</li>
-      <li><b>每天更新</b>：每晚 11 点左右整理当天内容。可以 <a data-g="app">📲 放到手机桌面</a>，有意见欢迎在 <a data-g="talk">💬 留言板</a> 说。</li>
-      <li>这里只是整理他公开说过的话，<b>不构成任何投资建议</b>。</li></ol>`;
+    d.innerHTML = `<div class="gt">👋 第一次来？30 秒看懂</div><ol>
+      <li>这里按日期整理 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a> 公开的<b>投资相关微博</b>，<b style="color:var(--red,#d00)">红字</b>是重点，「问」是网友、「答」是他。</li>
+      <li>想知道他买什么：<a data-g="track">📌 价位/仓位追踪</a> · <a data-g="ops">📝 操作日志</a></li>
+      <li>只想快速看：<a data-g="charts">⚡ 30秒速览</a> · <a data-g="weeks">📅 每周要点</a> · <a data-g="month">🗓 月度总结</a></li>
+      <li>找某只股票：<a data-g="stock">🔎 按股票看</a>；外号看不懂点虚线词或 <a data-g="gloss">📖 术语表</a></li>
+      <li>每晚 11 点左右更新 · <a data-g="app">📲 放到桌面</a> · <a data-g="talk">💬 留言板</a> · 不构成投资建议</li></ol>`;
     d.addEventListener("click", e => {
       const a = e.target.closest("[data-g]"); if (!a) return; e.preventDefault(); const g = a.dataset.g;
       if (g === "gloss") window.renderGloss(); else if (g === "app") window.renderApp(); else if (g === "talk") window.openTalk && window.openTalk(); else window.__go && window.__go(g);
@@ -185,7 +182,7 @@
     const n = Math.floor(new Date(today) / 864e5);
     const q = pool[n % pool.length];
     const el = document.createElement("div"); el.className = "quote";
-    el.innerHTML = `💬 <b>今日一句</b>：“${esc(q.t)}”<small>—— 鹿公 ${+q.d.slice(5, 7)}/${+q.d.slice(8, 10)} · <a href="${window.postLink ? window.postLink(q.b, q.s) : "#"}" target="_blank" rel="noopener">原文</a> · 每天换一句</small>`;
+    el.innerHTML = `💬 <b>今日一句</b>：“${esc(q.t)}”<small>—— ${+q.d.slice(5, 7)}/${+q.d.slice(8, 10)} <a href="${window.postLink ? window.postLink(q.b, q.s) : "#"}" target="_blank" rel="noopener">原文</a></small>`;
     const g = h.querySelector(".guide") || h.querySelector(".motto"); g ? g.after(el) : h.prepend(el);
   };
 })();
