@@ -170,5 +170,11 @@
   $(".tk-x").onclick = () => box.classList.remove("open");
 
   pull(true);
-  setInterval(() => { if (!document.hidden) pull(false); }, 10000);
+  let tkTick = 0;
+  setInterval(() => {
+    if (document.hidden) return;
+    tkTick++;
+    if (isDrawer() && !box.classList.contains("open") && tkTick % 3) return; // 手机抽屉没打开：约 60 秒一次，角标够用，省函数调用
+    pull(false);
+  }, 20000);
 })();
