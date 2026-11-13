@@ -66,11 +66,34 @@ window.renderMindmap=function(IDX){
 (function(){
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const rich=s=>esc(s).replace(/&lt;(\/?)b&gt;/g,"<$1b>");
+// 旧数据没有 code 时按名字兜底（新数据在 index.json 的 watch 里带 code/rn：代表标的代码与简称）
+const FALLBACK=[["电解铝","sz000807","云铝"],["山西煤","sh601699","潞安"],["云天化","sh600096","云天化"],["黄金","nf_AU0","金价"],["紫金","sh601899","紫金"],["火电","sh600011","华能"]];
+const meta=w=>{if(w.code)return{code:w.code,rn:w.rn||""};const f=FALLBACK.find(x=>String(w.name||"").includes(x[0]));return f?{code:f[1],rn:f[2]}:{code:"",rn:""};};
+const refOf=w=>{const all=String(w.px||"").match(/\d[\d,]*\.?\d*/g);return all?parseFloat(all[all.length-1].replace(/,/g,"")):null;}; // 取最后一个数字：px 形如「10/30 云铝 25.36」，日期在前、价格在最后
 window.renderWatch=function(IDX){
   const W=(IDX.watch||[]).slice().sort((a,b)=>b.d.localeCompare(a.d));if(!W.length)return"";
   return `<section class="wl"><div class="wl-h">🎯 他想买 / 想加仓的 <small>重点关注 · ${W.length} 个</small></div>
-  ${W.map(w=>`<a class="wl-i" href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener"><div class="wl-t"><b class="wl-n">${esc(w.name)}</b><span class="wl-s">${esc(w.st)}</span></div>
-   ${w.lv?`<div class="wl-lv">🎯 ${esc(w.lv)}${w.px?` <span>· ${esc(w.px)}</span>`:""}</div>`:(w.px?`<div class="wl-lv"><span>${esc(w.px)}</span></div>`:"")}
-   <div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · 原文 ›</div></a>`).join("")}</section>`;
+  ${W.map(w=>{const mt=meta(w),ref=refOf(w);return `<a class="wl-i" href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener"><div class="wl-t"><b class="wl-n">${esc(w.name)}</b><span class="wl-s">${esc(w.st)}</span></div>
+   ${w.lv?`<div class="wl-lv">🎯 ${esc(w.lv)}${w.px?` <span>· 参考 ${esc(w.px)}</span>`:""}</div>`:(w.px?`<div class="wl-lv"><span>参考 ${esc(w.px)}</span></div>`:"")}
+   ${mt.code?`<div class="wl-live" data-code="${esc(mt.code)}" data-rn="${esc(mt.rn)}" data-ref="${ref==null?"":ref}">现价读取中…</div>`:""}
+   <div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · 原文 ›</div></a>`;}).join("")}</section>`;
+};
+window.refreshWatch=async function(){
+  const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;
+  const codes=[...new Set(els.map(e=>e.dataset.code))];
+  try{
+    const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);
+    const j=await r.json(),Q=j.q||{};
+    els.forEach(e=>{
+      const q=Q[e.dataset.code];
+      if(!q||!(q.px>0)){e.textContent="现价暂时连不上";return;}
+      const rn=e.dataset.rn||"代表标的",ref=parseFloat(e.dataset.ref);
+      let t=`${rn}现价 <b>${q.px.toFixed(2)}</b>`;
+      if(q.chg!=null)t+=`（${q.chg>=0?"+":""}${(+q.chg).toFixed(2)}%）`;
+      if(ref>0){const d=(q.px/ref-1)*100;t+=` · 较参考价 ${d>=0?"+":""}${d.toFixed(1)}%`;}
+      if(q.t)t+=` · ${q.t}`;
+      e.innerHTML=t;
+    });
+  }catch(err){els.forEach(e=>e.textContent="现价暂时连不上");}
 };
 })();

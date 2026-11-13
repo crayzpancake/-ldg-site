@@ -19,7 +19,7 @@ button{font-size:15px;padding:8px 14px;border:0;border-radius:6px;background:#07
 </style></head><body><div class="w">
 <h1>📈 后台 · 访客统计 <small id="tm" style="color:#999;font-size:13px;font-weight:400"></small></h1>
 <div id="v"></div>
-<div class="cap">在线 = 最近 2 分钟内页面开着且在前台的人（每 60 秒报一次）。访客按设备算（同一手机同一浏览器算 1 人），不记录 IP 或任何个人信息。本页每 30 秒自动刷新，网站上不显示人数，也没有链接到这里。</div>
+<div class="cap">在线 = 最近 7 分钟内页面开着且在前台的人（每 5 分钟报一次）。访客按设备算（同一手机同一浏览器算 1 人），不记录 IP 或任何个人信息。本页每 30 秒自动刷新，网站上不显示人数，也没有链接到这里。</div>
 </div>
 <script>
 const V=document.getElementById("v");let K="";try{K=localStorage.getItem("ldg_admin")||"";}catch(e){}
@@ -34,7 +34,7 @@ async function load(){
   document.getElementById("tm").textContent="北京时间 "+j.now;
   const mx=Math.max(1,...j.days.map(d=>d.uv));
   V.innerHTML=`<div class="big"><div class="n">${j.online}</div><div class="s">现在在线</div></div>
-   <div class="row"><div class="big"><div class="n">${j.online5}</div><div class="s">近 5 分钟来过</div></div><div class="big"><div class="n">${j.app}</div><div class="s">在线中从桌面图标打开的</div></div></div>
+   <div class="row"><div class="big"><div class="n">${j.online5}</div><div class="s">近 15 分钟来过</div></div><div class="big"><div class="n">${j.app}</div><div class="s">在线中从桌面图标打开的</div></div></div>
    <table><tr><th>日期</th><th>当天访客</th></tr>${j.days.map((d,i)=>`<tr><td>${d.d.slice(5).replace("-","/")}${i===0?" 今天":""}</td><td class="bar"><span style="width:${Math.round(d.uv/mx*160)}px"></span>${d.uv}</td></tr>`).join("")}</table>`+viewsHTML(j.views);
 }
 load();setInterval(()=>{if(K)load();},30000);

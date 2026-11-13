@@ -1,5 +1,5 @@
 // 在线人数统计（只有管理员能看）
-// POST /api/ping {sid}       访客页面每 60 秒报一次（仅页面在前台时）
+// POST /api/ping {sid}       访客页面每 5 分钟报一次（仅页面在前台时）
 // GET  /api/online           需 header x-admin-key == 环境变量 ADMIN_KEY
 // 只存随机生成的匿名访客编号，不存 IP、不存任何个人信息。
 import { getStore } from "@netlify/blobs";
@@ -40,10 +40,10 @@ export default async (req) => {
       store.set(`m/${m}/${sid}`, String(app)),
       store.set(`d/${day(now)}/${sid}`, "1"),
     ]);
-    // 偶尔清理 15 分钟以前的在线记录
+    // 偶尔清理 20 分钟以前的在线记录
     if (Math.random() < 0.05) {
       const { blobs } = await store.list({ prefix: "m/" });
-      await Promise.all(blobs.filter(x => +x.key.split("/")[1] < m - 15).slice(0, 300).map(x => store.delete(x.key)));
+      await Promise.all(blobs.filter(x => +x.key.split("/")[1] < m - 20).slice(0, 300).map(x => store.delete(x.key)));
     }
     return J({ ok: true });
   }
@@ -56,10 +56,10 @@ export default async (req) => {
   const on = new Set(), on5 = new Set(), app = new Set();
   for (const x of blobs) {
     const [, mm, sid] = x.key.split("/");
-    if (+mm >= m - 1) on.add(sid);          // 最近 2 分钟有心跳 = 在线
-    if (+mm >= m - 4) on5.add(sid);
+    if (+mm >= m - 6) on.add(sid);          // 最近 7 分钟有心跳 = 在线（心跳已放宽到 5 分钟一次）
+    if (+mm >= m - 14) on5.add(sid); // 近 15 分钟
   }
-  for (const x of blobs) { const [, mm, sid] = x.key.split("/"); if (+mm >= m - 1 && on.has(sid)) { const v = await store.get(x.key); if (v === "1") app.add(sid); } }
+  for (const x of blobs) { const [, mm, sid] = x.key.split("/"); if (+mm >= m - 6 && on.has(sid)) { const v = await store.get(x.key); if (v === "1") app.add(sid); } }
   const days = [];
   for (let i = 0; i < 14; i++) {
     const d = day(now - i * 86400e3);
