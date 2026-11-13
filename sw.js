@@ -1,5 +1,5 @@
 // 网络优先：始终取最新内容；断网时才用缓存
-const C = "ldg-v5";
+const C = "ldg-v6";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", e => {

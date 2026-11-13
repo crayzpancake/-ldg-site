@@ -35,7 +35,8 @@
     return hitPromise;
   };
   function recordsHTML() {
-    if (!HITREC || !HITREC.length) return "";
+    if (!HITREC) return "";
+    if (!HITREC.length) return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录</div><div style="font-size:13.5px;color:var(--mute)">暂时还没有——他给过的价位都还没被股价碰到。哪天碰到了，这里会自动记下来，你离开期间碰到的，首页也会提醒你。</div></div>`;
     const rows = HITREC.slice(0, 15).map(e => `<div class="lv-rec"><span class="lv-rec-d">${e.date.slice(5).replace("-", "/")}</span><b>${esc(e.name)}</b><span class="tag ${e.k}">${esc(e.a)} ${e.p}${e.unit === "元/克" ? " 元/克" : " 元"}</span><span class="lv-rec-x">盘中已触及${e.days > 1 ? `，这一轮共 ${e.days} 天碰到` : ""}</span></div>`).join("");
     return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录 <small>他说出价位之后，股价盘中第一次碰到它的日子（按日K最高/最低算）</small></div>${rows}</div>`;
   }
