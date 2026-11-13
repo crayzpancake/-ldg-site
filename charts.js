@@ -25,6 +25,7 @@ function lineChart(host,pts,{unit="",dom,xs,noLine}){
   const path=pts.map((p,i)=>(i?"L":"M")+X(p.d).toFixed(1)+","+Y(p.y).toFixed(1)).join("");
   if(!noLine)el("path",{d:path,class:"ln"},svg);
   pts.forEach(p=>el("circle",{cx:X(p.d),cy:Y(p.y),r:noLine?5:3,class:"dot"},svg));
+  pts.forEach(p=>{if(!p.ev)return;const c=el("circle",{cx:X(p.d),cy:Y(p.y),r:5.5,class:"evd"},svg);const tt=el("title",{},c);tt.textContent="📌 他在这天有过操作表态："+p.ev;});
   // last value label
   const L=pts[pts.length-1];const lt=el("text",{x:X(L.d)-8,y:Y(L.y)-10,class:"lbl halo","text-anchor":"end"},svg);lt.textContent=L.y+unit;
   // hover
@@ -33,7 +34,7 @@ function lineChart(host,pts,{unit="",dom,xs,noLine}){
   const hit=el("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:"transparent"},svg);
   const move=ev=>{const r=svg.getBoundingClientRect();const sx=(ev.clientX-r.left)*W/r.width;let best=pts[0],bd=1e9;pts.forEach(p=>{const dd=Math.abs(X(p.d)-sx);if(dd<bd){bd=dd;best=p;}});
     cross.setAttribute("x1",X(best.d));cross.setAttribute("x2",X(best.d));cross.setAttribute("visibility","visible");hot.setAttribute("cx",X(best.d));hot.setAttribute("cy",Y(best.y));hot.setAttribute("visibility","visible");
-    showTip(`<div class="tt-d">${fmtD(best.d)}</div><div class="tt-v">${best.y}${unit}${best.chg!=null?` <span class="tt-m">（${best.chg>0?"+":""}${best.chg}）</span>`:""}</div>${best.note?`<div class="tt-m">${best.note}</div>`:""}`,ev);};
+    showTip(`<div class="tt-d">${fmtD(best.d)}</div><div class="tt-v">${best.y}${unit}${best.chg!=null?` <span class="tt-m">（${best.chg>0?"+":""}${best.chg}）</span>`:""}</div>${best.note?`<div class="tt-m">${best.note}</div>`:""}${best.ev?`<div class="tt-m">📌 他说：${String(best.ev).replace(/&/g,"&amp;").replace(/</g,"&lt;")}</div>`:""}`,ev);};
   hit.addEventListener("pointermove",move);hit.addEventListener("pointerdown",move);
   hit.addEventListener("pointerleave",()=>{cross.setAttribute("visibility","hidden");hot.setAttribute("visibility","hidden");hideTip();});
 }
@@ -116,6 +117,14 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
   }));
   const ser=o=>Object.values(o).sort((a,b)=>a.d.localeCompare(b.d));
   const A=ser(alu),O=ser(alo),C=ser(cci);
+  // 📌 事件标记：他在对应话题里说过买/卖/仓位的话，标到价格线同一天上
+  const ACT=/(加仓|买入|建仓|减仓|卖出|止盈|清仓|补仓|逢低|低吸|想买)/; const EV={alu:{},alo:{},cci:{}};
+  // 先用追踪表（人工精选的价位/仓位发言）打点，帖子关键词作补充
+  (IDX.tracker||[]).forEach(r=>{const t=STRIP(r.x).replace(/\s+/g," ");const put=k=>{if(!EV[k][r.d])EV[k][r.d]={ev:t.slice(0,72),evb:r.b};};
+    if(r.a==="电解铝")put("alu"); if(r.a==="煤炭")put("cci"); if(/氧化铝/.test(t))put("alo"); if(r.a==="仓位结构"){if(/铝/.test(t))put("alu"); if(/煤/.test(t))put("cci");}});
+  D.forEach(day=>day.posts.forEach(p=>{const t=STRIP(p.x).replace(/\s+/g," ");if(!ACT.test(t))return;const put=k=>{if(!EV[k][day.date])EV[k][day.date]={ev:t.slice(0,72),evb:p.b,evs:p.s};};
+    if(p.c==="电解铝"||/云铝|神火|中孚|铝锭|电解铝|沪铝/.test(t))put("alu"); if(/氧化铝/.test(t))put("alo"); if(p.c==="煤炭"||/煤价|动力煤|神华|中煤|陕煤|CCI/.test(t))put("cci");}));
+  A.forEach(p=>{const e=EV.alu[p.d];if(e)Object.assign(p,e);}); O.forEach(p=>{const e=EV.alo[p.d];if(e)Object.assign(p,e);}); C.forEach(p=>{const e=EV.cci[p.d];if(e)Object.assign(p,e);});
   // topic counts
   const CHAT="闲聊";const topicTot={};let invTot=0,tot=0;
   const wk=d=>{const t=new Date(d+"T00:00:00Z");const dow=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dow);return t.toISOString().slice(0,10);};
@@ -134,12 +143,13 @@ window.renderCharts=async function(main,IDX,getJSON,cache){
     ${lastA?tile(lastA.y,"A00铝锭（元/吨）",`${fmtD(lastA.d)} 他发的最新价`):""}
     ${lastC?tile(lastC.y,"动力煤 CCI 5500",`${fmtD(lastC.d)} 他发的最新价`):""}
    </div>
-   <section class="box"><h2>电解铝 A00 铝锭价格 <small>无锡，元/吨 · ${A.length} 个报价日</small></h2><div id="c-alu"></div><div class="cap">他的判断：26年中枢 <b>2.3万上下</b>，27年 <b>2.2–2.3万</b>，后几年大概率守不住 2.4 万。</div></section>
+   <section class="box"><h2>电解铝 A00 铝锭价格 <small>无锡，元/吨 · ${A.length} 个报价日</small></h2><div id="c-alu"></div><div class="cap" id="c-alu-ev"></div><div class="cap">他的判断：26年中枢 <b>2.3万上下</b>，27年 <b>2.2–2.3万</b>，后几年大概率守不住 2.4 万。</div></section>
    ${O.length>2?`<section class="box"><h2>氧化铝价格 <small>山西，元/吨</small></h2><div id="c-alo"></div></section>`:""}
    ${ch.gold?`<section class="box"><h2>黄金（人民币计价）防线 <small>${ch.gold.date} 他给的位置，元/克 · 现价实时</small></h2><div id="c-gold"></div><div class="cap">${ch.gold.note||""}</div></section>`:""}
   </div>`;
   const draw=()=>{
     if(A.length)lineChart(main.querySelector("#c-alu"),A,{unit:""});
+    const evHost=main.querySelector("#c-alu-ev"); if(evHost){const evs=A.filter(p=>p.ev); evHost.innerHTML=evs.length?`📌 红点 = 他在那天有过操作表态（${evs.length} 次），点/摸红点看原话。最近：`+evs.slice(-3).map(p=>`${fmtD(p.d)}「${p.ev.slice(0,34)}…」`).join("；"):"";}
     if(O.length>2)lineChart(main.querySelector("#c-alo"),O,{unit:""});
     if(ch.gold)ladder(main.querySelector("#c-gold"),ch.gold.levels,window.__goldNow||ch.gold.cur);
   };

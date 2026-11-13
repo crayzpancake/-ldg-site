@@ -4,6 +4,10 @@
   const rich = s => esc(s).replace(/&lt;(\/?)b&gt;/g, "<$1b>");
   const link = b => `https://weibo.com/3962719063/${b}`;
   let timer = null, Q = {}, at = 0, fail = false;
+  const SPARK = {}; let sparkBusy = false;
+  function sparkSVG(rows){ const ys=rows.map(x=>x[1]); if(ys.length<3)return ""; const lo=Math.min(...ys),hi=Math.max(...ys),W=260,H=34; const pts=rows.map((x,i)=>`${(i/(rows.length-1)*W).toFixed(1)},${(H-3-(x[1]-lo)/((hi-lo)||1)*(H-6)).toFixed(1)}`).join(" "); const up=ys[ys.length-1]>=ys[0]; return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up?"#d00":"#1a9a4a"}" stroke-width="1.6"/></svg><div class="lv-spark-s">${rows[0][0].slice(5)} – ${rows[rows.length-1][0].slice(5)} · 近20个交易日收盘</div>`; }
+  function cnNow(){ return new Date(Date.now()+8*3600e3); }
+  function mktStatus(){ const n=cnNow(),day=n.getUTCDay(),mins=n.getUTCHours()*60+n.getUTCMinutes(); const open=day>=1&&day<=5&&((mins>=570&&mins<=690)||(mins>=780&&mins<=900)); return open?"A股交易中":"A股非交易时段 · 显示最近行情"; }
 
   const css = `
 .lv-box h2 small .lv-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fb344;margin-right:4px;vertical-align:1px}
@@ -41,6 +45,7 @@
 .lv-src{margin-top:6px;font-size:12px;color:var(--mute)}
 .lv-src a{color:var(--mute)}
 .lv-note{font-size:12px;color:var(--mute);margin-top:8px}
+.lv-spark{margin-top:8px}.lv-spark-s{font-size:10.5px;color:var(--mute)}
 .lv-hits{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6}.lv-hits b{color:var(--red)}
 @media (min-width:700px){.lv-grid{grid-template-columns:1fr 1fr}}
 `;
@@ -78,7 +83,7 @@
       <div class="lv-top"><span class="lv-name">${esc(L.name)}</span><span class="lv-code">${esc(L.disp || "")}</span><span class="lv-sp"></span>
         <span class="lv-px">${px ? f2(px, L.unit) : "—"}</span>${chg != null && px ? `<span class="lv-chg ${chg >= 0 ? "lv-up" : "lv-dn"}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</span>` : ""}
         ${q && q.t ? `<span class="lv-t">${esc(q.t)}</span>` : ""}</div>
-      ${rule}${rows}${cond}
+      <div class="lv-spark">${SPARK[L.code]||""}</div>${rule}${rows}${cond}
       <div class="lv-src">${rich(L.x || "")} · ${esc((L.d || "").slice(5).replace("-", "/"))} <a href="${link(L.b)}" target="_blank" rel="noopener">原文</a>${L.tip ? ` · ${esc(L.tip)}` : ""}</div>
     </div>`;
   }
@@ -90,7 +95,9 @@
     const hits = hitList.length;
     const hitBar = hits ? `<div class="lv-hits">🔔 <b>已到他提过的价位（${hits} 个）</b>：${hitList.map(h => `${esc(h.name)}「${esc(h.a)} ${h.p}${h.unit === "元/克" ? " 元/克" : " 元"}」，现价 ${f2(h.px, h.unit)} 已${h.k === "buy" ? "在其下" : "在其上"}`).join("；")}</div>` : "";
     const t = at ? new Date(at) : null;
-    el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${fail ? "行情暂时连不上" : (t ? `实时 · ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")} 更新` : "读取行情…")}</small></h2>
+    const tfmt = t ? `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}` : "";
+    const status = fail ? (at ? `刷新失败 · 显示 ${tfmt} 的价格` : "行情暂时连不上") : (t ? `${mktStatus()} · ${tfmt} 刷新` : "读取行情…");
+    el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${status}</small></h2>
       ${hitBar}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
       <div class="lv-note">绿色 = 他提过的买入/加仓相关价位，红色 = 他提过的目标价；百分比是现价离该价位的距离，条越满离得越近。这些是他在不同时间、不同前提下随口提到的参考位，不是操作信号，他也可能随时改变想法。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理公开发言，不构成投资建议，请勿据此去打扰博主本人。</div>
     </section>`;
@@ -108,9 +115,13 @@
     paint(el, IDX);
   }
 
+  async function loadSparks(el, IDX) {
+    if (sparkBusy) return; const codes = [...new Set((IDX.levels || []).map(x => x.code).filter(c => c && !SPARK[c]))]; if (!codes.length) return; sparkBusy = true;
+    try { const r = await fetch("/api/kline?s=" + codes.join(",") + "&n=30"); if (!r.ok) throw new Error(r.status); const j = await r.json(), K = j.k || {}; codes.forEach(c => { SPARK[c] = sparkSVG((K[c] || []).slice(-20)); }); if (document.body.contains(el)) paint(el, IDX); } catch (e) {} sparkBusy = false;
+  }
   window.renderLevels = function (el, IDX) {
     if (!el || !(IDX.levels || []).length) return;
-    addCss(); paint(el, IDX); pull(el, IDX);
+    addCss(); paint(el, IDX); pull(el, IDX); loadSparks(el, IDX);
     clearInterval(timer);
     timer = setInterval(() => { if (!document.hidden) pull(el, IDX); }, 15000);
   };

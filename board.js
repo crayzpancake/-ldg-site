@@ -79,7 +79,10 @@
       <details><summary style="font-size:13px;cursor:pointer;margin-top:6px">看最近 10 天</summary>      <table class="bd-t"><tr><th>日期</th><th>5500</th><th>涨跌</th><th>5000</th><th>4500</th></tr>${C.slice(-10).reverse().map(r => `<tr><td>${md(r.d)}</td><td>${r.q5500}</td><td>${sg(r.c5500)}</td><td>${r.q5000 ?? "—"}</td><td>${r.q4500 ?? "—"}</td></tr>`).join("")}</table></details>
       <div class="bd-src">日价来自他每天发的 CCI 指数，CCTD 现货来自他帖子原文（自动解析）；长协和金鸡滩价格来自他转发的数据截图${M.coal_lt ? "（" + esc(M.coal_lt.src) + "）" : ""}。</div>`;
     wrap.appendChild(coalSec);
-    const cci = C.filter(r => r.q5500).map(r => ({ d: r.d, y: r.q5500, chg: r.c5500 }));
+    const EVB = {};
+    (IDX.tracker || []).forEach(r => { if (r.a === "煤炭" && !EVB[r.d]) EVB[r.d] = { ev: String(r.x || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").slice(0, 72) }; });
+    Object.values(cache || {}).forEach(D => D && D.posts.forEach(p => { const t = String(p.x || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " "); if (/(加仓|买入|建仓|减仓|卖出|止盈|清仓|补仓|逢低|低吸|想买)/.test(t) && (p.c === "煤炭" || /煤价|动力煤|神华|中煤|陕煤|CCI/.test(t)) && !EVB[D.date]) EVB[D.date] = { ev: t.slice(0, 72) }; }));
+    const cci = C.filter(r => r.q5500).map(r => ({ d: r.d, y: r.q5500, chg: r.c5500, ...(EVB[r.d] || {}) }));
     if (cci.length > 2 && window.lineChart) window.lineChart(coalSec.querySelector("#bd-cci"), cci, { unit: "" });
 
     // ---- ETF 份额 ----

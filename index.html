@@ -16,7 +16,7 @@
 <link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
 <link rel="alternate" type="application/rss+xml" title="超级鹿鼎公微博汇总" href="/rss.xml">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#c0392b">
-<meta name="apple-mobile-web-app-capable" content="yes"><script>try{var _t=localStorage.getItem("ldg_theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;}catch(e){}</script><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="鹿公汇总"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-capable" content="yes"><script>try{var _t=localStorage.getItem("ldg_theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t;var _f=localStorage.getItem("ldg_font");if(_f==="large"||_f==="xlarge")document.documentElement.dataset.font=_f;}catch(e){}</script><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="鹿公汇总"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 :root{--bg:#f7f5f1;--card:#fff;--ink:#1f1f1f;--mute:#8a8580;--line:#e6e1d9;--red:#d00;--soft:#fbeeee;--chip:#efebe5}
 @media (prefers-color-scheme:dark){:root{--bg:#141414;--card:#1e1e1e;--ink:#e9e9e9;--mute:#9a9a9a;--line:#323232;--red:#ff4d4d;--soft:#2b1b1b;--chip:#2a2a2a}}
@@ -225,10 +225,26 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 .wl-t{display:flex;justify-content:space-between;align-items:center;gap:6px}.wl-n{font-size:15px;color:var(--ink)!important}
 .wl-s{font-size:11px;background:var(--red);color:#fff;border-radius:6px;padding:1px 6px;white-space:nowrap}
 .wl-lv{font-size:13px;font-weight:700;color:var(--red);margin-top:3px}.wl-lv span{color:var(--mute);font-weight:400}
-.wl-x{font-size:13px;margin-top:3px}.wl-d{font-size:11px;color:var(--mute);margin-top:2px}.wl-live{font-size:12px;color:var(--mute);margin-top:2px}.wl-live b{color:var(--ink);font-size:13px}.wl-d a{color:var(--mute)}
+.wl-x{font-size:13px;margin-top:3px}.wl-d{font-size:11px;color:var(--mute);margin-top:2px}.wl-live{font-size:12px;color:var(--mute);margin-top:2px}.wl-live b{color:var(--ink);font-size:13px}.wl-d a{color:var(--mute)}.wl-bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}.wl-bar i{display:block;height:100%;border-radius:3px}.wl-spark{margin-top:4px}.wl-spark-s{font-size:10.5px;color:var(--mute)}
 .themebar{text-align:right;margin:0 0 4px}.themebar button{border:1px solid var(--line);background:var(--card);color:var(--mute);font-size:12px;border-radius:999px;padding:3px 10px;cursor:pointer}
 .trk-nav{position:sticky;top:46px;z-index:4;display:flex;gap:6px;overflow-x:auto;background:var(--bg);padding:6px 0;scrollbar-width:none}.trk-nav::-webkit-scrollbar{display:none}.trk-nav button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:5px 11px;border-radius:999px;font-size:13px;cursor:pointer}
 #toTop{position:fixed;right:16px;bottom:22px;z-index:9;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);display:none}
+.box,details.grp,.tile{box-shadow:0 1px 3px rgba(31,31,31,.05)}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+:root[data-font="large"] .x,:root[data-font="large"] ol.hl li{font-size:17px;line-height:1.78}:root[data-font="large"] .q,:root[data-font="large"] .src{font-size:15.5px}:root[data-font="large"] .note{font-size:14.5px}:root[data-font="large"] .ig-txt{font-size:16.5px}:root[data-font="large"] .wl-x{font-size:14.5px}
+:root[data-font="xlarge"] .x,:root[data-font="xlarge"] ol.hl li{font-size:19px;line-height:1.85}:root[data-font="xlarge"] .q,:root[data-font="xlarge"] .src{font-size:17px}:root[data-font="xlarge"] .note{font-size:16px}:root[data-font="xlarge"] .ig-txt{font-size:18px}:root[data-font="xlarge"] .wl-x{font-size:16px}
+.today-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card),var(--soft));border:1.5px solid var(--red);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 3px 14px rgba(208,0,0,.08)}
+.today-hero .th-top{display:flex;gap:12px;align-items:flex-start}.today-seal{flex:none;width:52px;height:52px;border-radius:10px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:900;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.today-hero h1{font-size:23px;line-height:1.25;margin:0}.today-hero .th-sub{font-size:13px;color:var(--mute);margin-top:3px}.today-status{margin-left:auto;flex:none;font-size:12px;font-weight:700;color:var(--red);background:var(--card);border:1px solid var(--red);padding:3px 8px;border-radius:999px}
+.th-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.th-price{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:8px 10px}.th-price .l{font-size:12px;color:var(--mute)}.th-price .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}.th-price .s{font-size:11px;color:var(--mute)}
+.th-watch{font-size:14px;line-height:1.65}.th-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.th-actions button{border:1px solid var(--red);background:var(--red);color:#fff;border-radius:999px;padding:7px 14px;font-size:14px;cursor:pointer}.th-actions button.alt{background:var(--card);color:var(--ink);border-color:var(--line)}
+.bottom-nav{display:none}.more-sheet{display:none}
+@media (max-width:760px){.wrap{padding-bottom:112px}#toTop{bottom:84px}.bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}.bottom-nav button{border:0;background:transparent;color:var(--mute);font-size:19px;line-height:1.15;padding:5px 2px;border-radius:10px;cursor:pointer}.bottom-nav button span{display:block;font-size:11px;margin-top:1px}.bottom-nav button.on{color:var(--red);font-weight:700;background:var(--soft)}.more-sheet.open{display:flex;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.38);align-items:flex-end}.more-card{background:var(--card);color:var(--ink);width:100%;border-radius:18px 18px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom));max-height:78vh;overflow:auto}.more-h{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px;margin-bottom:10px}.more-h button{border:0;background:var(--chip);border-radius:50%;width:34px;height:34px;cursor:pointer}.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.more-grid button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:11px;padding:11px 6px;font-size:14px;cursor:pointer}}
+.readbar{display:flex;gap:6px;align-items:center;margin:8px 0 0}.readbar button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer}.readbar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.readbar .cnt{font-size:12px;color:var(--mute)}
+.key-only .post:not(.key){display:none}.key-only details.grp:not(:has(.post.key)){display:none}.post-focus{animation:pf 2.2s ease-out}@keyframes pf{0%,55%{background:var(--soft);box-shadow:inset 4px 0 0 var(--red)}100%{background:transparent}}
+.post-actions{display:flex;gap:12px}.post-actions a,.post-actions button{font-size:12px}.post-actions button{border:0;background:none;color:var(--mute);cursor:pointer;padding:0;font:inherit}.post.long .x{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}.post.long.open .x{display:block}.post-more{border:0;background:none;color:var(--red);cursor:pointer;padding:5px 0 0;font-size:13px}
+svg .evd{fill:var(--red);stroke:var(--card);stroke-width:2}
 .post.buy{background:var(--soft);border-left:4px solid var(--red)}
 .buy-tag{background:var(--red);color:#fff;border-radius:6px;padding:0 6px;font-size:11px;margin-left:4px}
 .buybox{border:1.5px solid var(--red)}.buybox .post{border-top:1px solid var(--line)}
@@ -238,7 +254,7 @@ details.tbl summary{cursor:pointer;color:var(--mute);font-size:14px}
 <div style="display:none"><img src="og.png" alt="超级鹿鼎公微博汇总"></div>
 <div class="wrap">
 <header>
-<div class="themebar"><button id="themeBtn" type="button">🌗 主题：跟随系统</button></div>
+<div class="themebar"><button id="fontBtn" type="button">A 字号：标准</button> <button id="themeBtn" type="button">🌗 主题：跟随系统</button></div>
 <div class="motto"><div class="mg">
 <div><b>价值选股</b><em>选看得懂、现金流好、高分红、有壁垒的优质公司</em></div>
 <div><b>趋势选时</b><em>不盲目抄底，结合宏观、流动性、市场拐点择时</em></div>
@@ -263,10 +279,10 @@ async function getJSON(p){const r=await fetch(p,{cache:"no-cache"});if(!r.ok)thr
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
+  el.innerHTML=`<button data-v="home">🏠 今日</button><button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
-function mark(v){const k=/^\d/.test(v)?"day":v;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));}
+function mark(v){const k=v==="home"?"home":(/^\d/.test(v)?"day":v);document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.v===k;b.classList.toggle("on",on);if(on){const row=b.parentElement;if(row)row.scrollTo({left:b.offsetLeft-(row.clientWidth-b.clientWidth)/2,behavior:"smooth"});}});const bn=v==="home"||/^\d/.test(v)?"home":(["charts","track"].includes(v)?v:(["weeks","mind","ps","method","ops","stock","month"].includes(v)?"more":""));document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("on",b.dataset.bn===bn));}
 function daybar(v){
   const i=IDX.days.findIndex(d=>d.date===v);
   const opts=IDX.days.map(d=>`<option value="${d.date}"${d.date===v?" selected":""}>${d.date.slice(5).replace("-","月")}日 ${d.weekday||""} · ${d.count}条${d.live?"（今天·实时更新中）":""}</option>`).join("");
@@ -280,16 +296,24 @@ function wireDaybar(v){
 function weeksHTML(){
   return (IDX.weeks||[]).map(w=>`<section class="box wk"><h2>${esc(w.id.replace("2026-W","第")+"周")} <small>${esc(w.range)}</small></h2><ol class="hl">${w.items.map(x=>`<li>${rich(x)}</li>`).join("")}</ol></section>`).join("")||`<div class="empty">暂无</div>`;
 }
-function postHTML(p){
+function postHTML(p,date){
   const reply=!!p.q;
-  return `<div class="post${reply?" reply":""}${p.buy?" buy":""}">
-    <div class="meta"><span>${esc(p.t)}${p.s==="xq"?` <span class="buy-tag" style="background:#2f6fd6">雪球</span>`:""}${p.buy?` <span class="buy-tag">🎯 想买/加仓</span>`:""}</span><a href="${link(p.b,p.s)}" target="_blank" rel="noopener">原文</a></div>
+  const txt=String(p.x||"").replace(/<[^>]+>/g,"");
+  const key=!!p.buy||/<b>/.test(p.x||"")||/(加仓|买入|建仓|减仓|卖出|止盈|清仓|满仓|仓位|价位|防线|关口)/.test(txt);
+  const long=txt.length>180;
+  return `<div class="post${reply?" reply":""}${p.buy?" buy":""}${key?" key":""}${long?" long":""}" data-post="${esc(p.b||"")}">
+    <div class="meta"><span>${esc(p.t)}${p.s==="xq"?` <span class="buy-tag" style="background:#2f6fd6">雪球</span>`:""}${p.buy?` <span class="buy-tag">🎯 想买/加仓</span>`:""}</span><span class="post-actions"><a href="${link(p.b,p.s)}" target="_blank" rel="noopener">原文</a>${date?`<button type="button" onclick="window.copyPostLink('${date}','${esc(p.b||"")}',this)">复制单条链接</button>`:""}</span></div>
     ${reply?`<div class="q">${rich(p.q)}</div>`:""}
-    <div class="x">${rich(p.x)}</div>
+    <div class="x">${rich(p.x)}</div>${long?`<button type="button" class="post-more">展开全文</button>`:""}
     ${p.src?`<div class="src"><em>${esc(p.src.u)}：</em>${rich(p.src.x)}</div>`:""}
     ${p.note?`<div class="note">${rich(p.note)}</div>`:""}
   </div>`;
 }
+window.copyPostLink=async function(date,b,btn){
+  const url=`${location.origin}/#d${date.replace(/-/g,"")}@${encodeURIComponent(b)}`;
+  try{await navigator.clipboard.writeText(url);if(btn){const o=btn.textContent;btn.textContent="已复制";setTimeout(()=>btn.textContent=o,1600);}}
+  catch(e){prompt("复制这个链接",url);}
+};
 
 function dayHTML(D){
   const groups={};
@@ -300,10 +324,10 @@ function dayHTML(D){
   const inv=D.posts.filter(p=>(p.c||CHAT)!==CHAT).length;
   const buys=D.posts.filter(p=>p.buy);
   let h=`<section class="box"><h2><span>今日要点${D.auto?`<span class="auto">自动摘选</span>`:""}</span> <small>${D.date} ${D.weekday||""} · 共${D.count}条，投资相关${inv}条</small></h2><ol class="hl">${D.highlights.map(x=>`<li>${rich(x)}</li>`).join("")}</ol>${D.auto?`<div class="auto">这一天是补录的，要点和分类为自动整理；人工细读的结论见「📅 每周要点」。</div>`:""}</section>`;
-  if(buys.length)h=`<section class="box buybox"><h2>🎯 今天他说想买/想加仓的 <small>${buys.length}条</small></h2>${buys.map(postHTML).join("")}</section>`+h;
+  if(buys.length)h=`<section class="box buybox"><h2>🎯 今天他说想买/想加仓的 <small>${buys.length}条</small></h2>${buys.map(p=>postHTML(p,D.date)).join("")}</section>`+h;
   names.forEach((n,i)=>{
     const isChat=n===CHAT;
-    h+=`<details class="grp${isChat?"":" inv"}"${isChat?"":" open"}><summary><span>${esc(n)}<span class="n">${groups[n].length}条</span></span></summary>${groups[n].map(postHTML).join("")}</details>`;
+    h+=`<details class="grp${isChat?"":" inv"}"${isChat?"":" open"}><summary><span>${esc(n)}<span class="n">${groups[n].length}条</span></span></summary>${groups[n].map(p=>postHTML(p,D.date)).join("")}</details>`;
   });
   return h;
 }
@@ -320,20 +344,24 @@ function trackHTML(){
 
 async function go(v){
   cur=v; mark(v); if(window.hit)window.hit(/^\d/.test(v)?"day":v);
-  const m=document.getElementById("main");
-  const h=["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,"");
+  const m=document.getElementById("main"); m.classList.remove("key-only");
+  if(v==="home"){ try{ if(location.hash!=="#home") history.replaceState(null,"","#home"); }catch(e){} const d=IDX.days[0]; if(!d){m.innerHTML=`<div class="empty">暂无数据</div>`;return;} m.innerHTML=`<div class="empty">正在整理今日一页纸…</div>`; try{ cache[d.date]=cache[d.date]||await getJSON(`data/${d.date}.json`); if(cur!=="home")return; m.innerHTML=window.renderTodayPaper(cache[d.date],IDX); if(window.refreshTodayPaper)window.refreshTodayPaper(); }catch(e){ if(cur==="home")m.innerHTML=`<div class="empty">今日数据读取失败，请稍后刷新</div>`; } return; }
+  const h=v==="home"?"home":(["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,""));
   if(v!=="stock"){try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}}
   if(v==="ops"){window.renderOps(m,IDX);return;}
   if(v==="month"){window.renderMonthly(m,IDX);return;}
   if(v==="stock"){window.renderStock(m,IDX,window.__stockStart);window.__stockStart=null;return;}
-  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(window.refreshWatch)window.refreshWatch(IDX);if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};const tn=m.querySelector(".trk-nav");if(tn)tn.onclick=e=>{const id=e.target.dataset&&e.target.dataset.to;const el=id&&document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};return;}
+  if(v==="track"){m.innerHTML=trackHTML();if(window.renderLevels)window.renderLevels(m.querySelector("#lvl"),IDX);if(window.refreshWatch)window.refreshWatch(IDX);if(window.loadWatchSparks)window.loadWatchSparks();if(IDX.charts&&IDX.charts.rebal&&window.renderRebal)window.renderRebal(m.querySelector("#rebal"),IDX.charts.rebal);m.querySelector(".chips").onclick=e=>{const a=e.target.dataset.a;if(a){window.__asset=a;go("track");}};const tn=m.querySelector(".trk-nav");if(tn)tn.onclick=e=>{const id=e.target.dataset&&e.target.dataset.to;const el=id&&document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};return;}
   if(v==="weeks"){m.innerHTML=weeksHTML();return;}
   if(v==="charts"){Promise.resolve(window.renderCharts(m,IDX,getJSON,cache)).then(()=>{if(cur==="charts"&&window.renderQuick)window.renderQuick(m,IDX);if(cur==="charts"&&window.renderBoard)window.renderBoard(m,IDX,cache);if(cur==="charts"&&window.renderCopper)window.renderCopper(m,IDX,cache);});return;}
   if(v==="mind"){m.innerHTML=window.renderMindmap(IDX);return;}
   if(v==="ps"){window.renderPS(m,getJSON);return;}
   if(v==="method"){window.renderMethod();return;}
   m.innerHTML=daybar(v)+`<div class="empty">加载中…</div>`; wireDaybar(v);
-  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+(cache[v].live?`<div class="ps-why">⏱ 今天的微博实时更新中（约每小时一次），最近更新 ${cache[v].updated?new Date(cache[v].updated).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Shanghai"}):""}；第二天早上会整理成完整版。</div>`:"")+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});} }
+  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+(cache[v].live?`<div class="ps-why">⏱ 今天的微博实时更新中（约每小时一次），最近更新 ${cache[v].updated?new Date(cache[v].updated).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Shanghai"}):""}；第二天早上会整理成完整版。</div>`:"")+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});
+  if(mode==="text"){ const keyN=cache[v].posts.filter(p=>p.buy||/<b>/.test(p.x||"")||/(加仓|买入|建仓|减仓|卖出|止盈|清仓|满仓|仓位|价位|防线|关口)/.test(String(p.x||"").replace(/<[^>]+>/g,""))).length; const rb=document.createElement("div"); rb.className="readbar"; rb.innerHTML=`<button type="button" class="${window.__keyOnly?"on":""}">${window.__keyOnly?"⭐ 正在只看重点":"⭐ 只看重点"}</button><span class="cnt">重点 ${keyN} / 共 ${cache[v].posts.length} 条</span>`; const ms=m.querySelector(".modesw"); if(ms)ms.after(rb); if(window.__keyOnly)m.classList.add("key-only"); rb.querySelector("button").onclick=()=>{window.__keyOnly=!window.__keyOnly;go(v);}; }
+  m.querySelectorAll(".post-more").forEach(b=>b.onclick=()=>{const p=b.closest(".post");p.classList.toggle("open");b.textContent=p.classList.contains("open")?"收起":"展开全文";});
+  if(window.__postFocus){ const el=m.querySelector(`[data-post="${window.__postFocus}"]`); if(el){ const det=el.closest("details"); if(det)det.open=true; setTimeout(()=>{el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.add("post-focus");},80); } window.__postFocus=null; } } }
   catch(e){ m.innerHTML=daybar(v)+`<div class="empty">这一天的数据读取失败，请稍后刷新</div>`; wireDaybar(v); }
 }
 
@@ -350,29 +378,36 @@ async function go(v){
   if(window.renderQuote)window.renderQuote(IDX);
   const h=location.hash.slice(1);
   window.__goDay=d=>go(d);
-  let start="charts";
-  if(["track","weeks","charts","mind","ps","method","ops","month","stock"].includes(h))start=h;
+  let start="home";
+  if(["home","track","weeks","charts","mind","ps","method","ops","month","stock"].includes(h))start=h;
   if(/^stock=/.test(h)){window.__stockStart=decodeURIComponent(h.slice(6));start="stock";}
   if(h==="news"&&window.renderNews){window.renderNews();return;}
   if(h==="gloss"&&window.renderGloss){window.renderGloss();return;}
   if(h==="app"&&window.renderApp){window.renderApp();return;}
   else if(/^d\d{8}$/.test(h)){const d=h.slice(1,5)+"-"+h.slice(5,7)+"-"+h.slice(7);if(IDX.days.some(x=>x.date===d))start=d;}
+  else if(/^d\d{8}@/.test(h)){const d=h.slice(1,5)+"-"+h.slice(5,7)+"-"+h.slice(7);if(IDX.days.some(x=>x.date===d)){start=d;window.__postFocus=decodeURIComponent(h.slice(10));window.__dayMode="text";}}
   if(/^s=/.test(h)&&window.doSearch){window.doSearch(decodeURIComponent(h.slice(2)));return;}
   go(start);
 })();
 </script>
-<script src="charts.js"></script>
-<script src="visual.js"></script>
-<script src="ps.js"></script>
-<script src="extra.js"></script>
-<script src="board.js"></script>
-<script src="levels.js"></script>
-<script src="talk.js"></script>
-<script src="more.js"></script>
-<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
+<script src="charts.js?v=20261113-3"></script>
+<script src="visual.js?v=20261113-3"></script>
+<script src="ps.js?v=20261113-3"></script>
+<script src="extra.js?v=20261113-3"></script>
+<script src="board.js?v=20261113-3"></script>
+<script src="levels.js?v=20261113-3"></script>
+<script src="talk.js?v=20261113-3"></script>
+<script src="more.js?v=20261113-3"></script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js",{updateViaCache:"none"}).catch(()=>{}));</script>
+<nav class="bottom-nav" id="bottomNav" aria-label="主导航"><button data-bn="home" type="button">🏠<span>今日</span></button><button data-bn="charts" type="button">📊<span>图表</span></button><button data-bn="track" type="button">📌<span>价位</span></button><button data-bn="search" type="button">🔍<span>搜索</span></button><button data-bn="more" type="button">☰<span>更多</span></button></nav>
+<div class="more-sheet" id="moreSheet"><div class="more-card"><div class="more-h"><span>全部栏目</span><button id="moreClose" type="button" aria-label="关闭">✕</button></div><div class="more-grid"><button data-mv="day" type="button">📰 每日微博</button><button data-mv="weeks" type="button">📅 每周要点</button><button data-mv="mind" type="button">🧠 观点导图</button><button data-mv="ps" type="button">🗂 持仓PS图</button><button data-mv="method" type="button">📚 方法论</button><button data-mv="ops" type="button">📝 操作日志</button><button data-mv="stock" type="button">🔎 按股票看</button><button data-mv="month" type="button">🗓 月度总结</button><button data-mv="gloss" type="button">📖 术语表</button><button data-mv="news" type="button">🆕 更新说明</button><button data-mv="talk" type="button">💬 留言板</button><button data-mv="app" type="button">📲 放到桌面</button></div></div></div>
 <button id="toTop" type="button" aria-label="回到顶部">↑</button>
 <script>(function(){const b=document.getElementById("toTop");addEventListener("scroll",()=>{b.style.display=scrollY>600?"block":"none";},{passive:true});b.onclick=()=>scrollTo({top:0,behavior:"smooth"});})();</script>
 <script>(function(){const btn=document.getElementById("themeBtn");if(!btn)return;const names={auto:"跟随系统",light:"浅色",dark:"深色"};const cur=()=>{try{return localStorage.getItem("ldg_theme")||"auto";}catch(e){return "auto";}};const apply=v=>{if(v==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=v;btn.textContent="🌗 主题："+names[v];};apply(cur());btn.onclick=()=>{const order=["auto","light","dark"];const v=order[(order.indexOf(cur())+1)%3];try{localStorage.setItem("ldg_theme",v);}catch(e){}apply(v);};})();</script>
+<script>(function(){const btn=document.getElementById("fontBtn");if(!btn)return;const names={standard:"标准",large:"大字",xlarge:"特大"};const cur=()=>{try{return localStorage.getItem("ldg_font")||"standard";}catch(e){return "standard";}};const apply=v=>{if(v==="standard")delete document.documentElement.dataset.font;else document.documentElement.dataset.font=v;btn.textContent="A 字号："+names[v];};apply(cur());btn.onclick=()=>{const order=["standard","large","xlarge"];const v=order[(order.indexOf(cur())+1)%3];try{localStorage.setItem("ldg_font",v);}catch(e){}apply(v);};})();</script>
+<script>(function(){const nav=document.getElementById("bottomNav"),sheet=document.getElementById("moreSheet");if(!nav)return;const close=()=>sheet.classList.remove("open");document.getElementById("moreClose").onclick=close;sheet.addEventListener("click",e=>{if(e.target===sheet)close();});
+nav.onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.bn;if(k==="search"){scrollTo({top:0,behavior:"smooth"});setTimeout(()=>{const i=document.querySelector(".srch input");if(i){i.focus();i.scrollIntoView({block:"center",behavior:"smooth"});}},350);return;}if(k==="more"){sheet.classList.add("open");return;}window.__go&&window.__go(k);};
+sheet.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{close();const v=b.dataset.mv;if(v==="day"){window.__go&&window.__go(window.__IDX.days[0].date);}else if(v==="gloss")window.renderGloss&&window.renderGloss();else if(v==="news")window.renderNews&&window.renderNews();else if(v==="app")window.renderApp&&window.renderApp();else if(v==="talk")window.openTalk&&window.openTalk();else window.__go&&window.__go(v);});})();</script>
 <script>(function(){let sid;try{sid=localStorage.getItem("ldg_sid");if(!sid){sid=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("ldg_sid",sid);}}catch(e){sid=Math.random().toString(36).slice(2)+Date.now().toString(36);}
 const app=matchMedia("(display-mode: standalone)").matches||navigator.standalone?1:0;
 let lastPing=0;const ping=()=>{if(document.visibilityState!=="visible")return;const n=Date.now();if(n-lastPing<60000)return;lastPing=n;fetch("/api/ping",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sid,app}),keepalive:true}).catch(()=>{});};

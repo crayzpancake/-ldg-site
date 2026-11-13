@@ -47,6 +47,32 @@ window.renderInfographic=function(D){
   </div>`;
 };
 
+window.renderTodayPaper=function(D,IDX){
+  const buys=(D.posts||[]).filter(p=>p.buy);
+  const W=(IDX.watch||[]).slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,3);
+  const hero=`<section class="today-hero"><div class="th-top"><div class="today-seal">鹿</div><div><h1>今日一页纸</h1><div class="th-sub">${D.date} ${esc(D.weekday||"")} · 挖地瓜的超级鹿鼎公 · 共 ${D.count} 条微博</div></div><span class="today-status">${D.live?"实时更新中":"已整理"}</span></div>
+  <div class="th-prices">
+    <div class="th-price"><div class="l">云铝股份 · 现价</div><div class="v" data-today-code="sz000807">读取中</div><div class="s" data-today-sub="sz000807">电解铝代表标的</div></div>
+    <div class="th-price"><div class="l">黄金 · 现价</div><div class="v" data-today-code="nf_AU0">读取中</div><div class="s" data-today-sub="nf_AU0">上期所黄金主力</div></div>
+    <div class="th-price"><div class="l">紫金矿业 · 现价</div><div class="v" data-today-code="sh601899">读取中</div><div class="s" data-today-sub="sh601899">有色龙头</div></div>
+  </div>
+  <div class="th-watch">${buys.length?`🎯 <b>今天他说想买/想加仓 ${buys.length} 条</b>，往下翻信息图里有原文。`:`🎯 今天没有新的想买/想加仓表态。`}${W.length?`<br>最近关注清单：${W.map(w=>`<b>${esc(String(w.name||"").replace(/（.*/,""))}</b>（${esc(w.st||"")}）`).join("、")}`:""}</div>
+  <div class="th-actions"><button type="button" onclick="window.__dayMode='text';window.__go('${D.date}')">📝 看今日文字版</button><button type="button" class="alt" onclick="window.__go('track')">📌 看价位离多远</button><button type="button" class="alt" onclick="window.__go('charts')">📊 看图表</button></div></section>`;
+  return hero+window.renderInfographic(D);
+};
+window.refreshTodayPaper=async function(){
+  const els=[...document.querySelectorAll("[data-today-code]")];if(!els.length)return;
+  const codes=[...new Set(els.map(e=>e.dataset.todayCode))];
+  try{
+    const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);
+    const j=await r.json(),Q=j.q||{};
+    els.forEach(e=>{const q=Q[e.dataset.todayCode];const sub=document.querySelector(`[data-today-sub="${e.dataset.todayCode}"]`);
+      if(!q||!(q.px>0)){e.textContent="暂未刷到";return;}
+      e.textContent=q.px.toFixed(2);
+      if(sub)sub.textContent=`${q.chg!=null?(q.chg>=0?"+":"")+q.chg.toFixed(2)+"%":""}${q.t?" · "+q.t:""}`;});
+  }catch(err){els.forEach(e=>e.textContent="暂未刷到");}
+};
+
 window.renderMindmap=function(IDX){
   const groups={};(IDX.tracker||[]).forEach(r=>{(groups[r.a]=groups[r.a]||[]).push(r);});
   const order=["仓位结构","电解铝","煤炭","黄金","白银","水电","紫金","磷肥","铜","券商","利率","石油化工","方法论"];
@@ -76,7 +102,7 @@ window.renderWatch=function(IDX){
   ${W.map(w=>{const mt=meta(w),ref=refOf(w);return `<article class="wl-i"><div class="wl-t"><b class="wl-n">${esc(w.name)}</b><span class="wl-s">${esc(w.st)}</span></div>
    ${w.lv?`<div class="wl-lv">🎯 ${esc(w.lv)}${w.px?` <span>· 参考 ${esc(w.px)}</span>`:""}</div>`:(w.px?`<div class="wl-lv"><span>参考 ${esc(w.px)}</span></div>`:"")}
    ${mt.code?`<div class="wl-live" data-code="${esc(mt.code)}" data-rn="${esc(mt.rn)}" data-ref="${ref==null?"":ref}">现价读取中…</div>`:""}
-   <div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · <a href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener">原文 ›</a></div></article>`;}).join("")}</section>`;
+   <div class="wl-bar" data-bar="${esc(mt.code)}" hidden><i></i></div><div class="wl-spark" data-spark="${esc(mt.code)}"></div><div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · <a href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener">原文 ›</a></div></article>`;}).join("")}</section>`;
 };
 window.refreshWatch=async function(){
   const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;
@@ -94,6 +120,35 @@ window.refreshWatch=async function(){
       if(q.t)t+=` · ${q.t}`;
       e.innerHTML=t;
     });
+    els.forEach(e=>{
+      const bar=document.querySelector(`.wl-bar[data-bar="${e.dataset.code}"]`);
+      if(!bar)return; const q=Q[e.dataset.code],ref=parseFloat(e.dataset.ref);
+      if(!q||!(q.px>0)||!(ref>0)){bar.hidden=true;return;}
+      const d=Math.abs(q.px/ref-1)*100;
+      const i=bar.querySelector("i"); i.style.width=Math.max(4,100-Math.min(100,d*4))+"%"; i.style.background=q.px<=ref?"#1a9a4a":"var(--red)";
+      bar.hidden=false;
+    });
   }catch(err){els.forEach(e=>e.textContent="现价暂时连不上");}
+};
+const WSPARK={};
+window.loadWatchSparks=async function(){
+  const els=[...document.querySelectorAll(".wl-spark[data-spark]")].filter(e=>e.dataset.spark&&!e.dataset.done);
+  if(!els.length)return;
+  const codes=[...new Set(els.map(e=>e.dataset.spark))].filter(c=>c);
+  try{
+    const r=await fetch("/api/kline?s="+codes.join(",")+"&n=30");if(!r.ok)throw new Error(r.status);
+    const j=await r.json(),K=j.k||{};
+    els.forEach(e=>{
+      e.dataset.done="1"; const rows=(K[e.dataset.spark]||[]).slice(-20);
+      if(rows.length<3){e.innerHTML="";return;}
+      if(!WSPARK[e.dataset.spark]){
+        const ys=rows.map(x=>x[1]),lo=Math.min(...ys),hi=Math.max(...ys),W=260,H=30;
+        const pts=rows.map((x,i)=>`${(i/(rows.length-1)*W).toFixed(1)},${(H-3-(x[1]-lo)/((hi-lo)||1)*(H-6)).toFixed(1)}`).join(" ");
+        const up=ys[ys.length-1]>=ys[0];
+        WSPARK[e.dataset.spark]=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up?"#d00":"#1a9a4a"}" stroke-width="1.6"/></svg><div class="wl-spark-s">${rows[0][0].slice(5)} – ${rows[rows.length-1][0].slice(5)} · 近20日</div>`;
+      }
+      e.innerHTML=WSPARK[e.dataset.spark];
+    });
+  }catch(err){els.forEach(e=>{e.dataset.done="1";e.innerHTML="";});}
 };
 })();
