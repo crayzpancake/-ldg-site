@@ -107,9 +107,13 @@
         const lab = r => r.d === last.d ? `${md(r.d)}` : `${+r.ym.slice(2, 4)}/${+r.ym.slice(5)}`;
         etfSec.innerHTML = `<h2>ETF 份额 <small>亿份 · 最近一年按月底 · 最新 ${md(last.d)} · 只列国家队参与过的宽基</small></h2>` + G.map((g, gi) => {
           const tot = row => row ? g.codes.reduce((a, c) => a + ((row.v || {})[c[0]] || 0), 0) : null;
-          const t0 = tot(last);
-          return `<div class="bd-sub">${esc(g.name)} · 合计 ${t0.toFixed(2)} 亿份　较上一交易日 ${sg(prevD ? t0 - tot(prevD) : null, 2)}　较上月底 ${sg(prevM ? t0 - tot(prevM) : null, 2)}　较一年前 ${sg(t0 - tot(yearAgo), 2)}</div>
-            <div class="bd-cards">${g.codes.map(([c, n]) => { const v = last.v[c]; if (v == null) return ""; const p = prevM && prevM.v[c], y = yearAgo.v[c], dd = prevD && prevD.v[c]; return card(`${esc(n)} · ${c}`, v.toFixed(2), "亿份", `日 ${sg(dd != null ? v - dd : null, 2)} · 月 ${sg(p != null ? v - p : null, 2)}<br>较一年前 ${y ? sg((v / y - 1) * 100, 0) + "%" : "—"}`); }).join("")}</div>
+          const dLast = D.length ? D[D.length - 1] : null;
+          const cov = dLast ? g.codes.filter(c => dLast.v && dLast.v[c[0]] != null).length : 0;
+          const useD = !!dLast && cov >= Math.ceil(g.codes.length / 2);
+          const lastG = useD ? dLast : R[R.length - 1], prevDG = useD ? prevD : null;
+          const t0 = tot(lastG);
+          return `<div class="bd-sub">${esc(g.name)} · 合计 ${t0.toFixed(2)} 亿份　较上一交易日 ${sg(prevDG ? t0 - tot(prevDG) : null, 2)}　较上月底 ${sg(prevM ? t0 - tot(prevM) : null, 2)}　较一年前 ${sg(t0 - tot(yearAgo), 2)}${useD ? "" : ` · <span style="color:var(--mute)">当日分项未齐，按 ${md(lastG.d)} 数</span>`}</div>
+            <div class="bd-cards">${g.codes.map(([c, n]) => { const v = lastG.v[c]; if (v == null) return ""; const p = prevM && prevM.v[c], y = yearAgo.v[c], dd = prevDG && prevDG.v[c]; return card(`${esc(n)} · ${c}`, v.toFixed(2), "亿份", `日 ${sg(dd != null ? v - dd : null, 2)} · 月 ${sg(p != null ? v - p : null, 2)}<br>较一年前 ${y ? sg((v / y - 1) * 100, 0) + "%" : "—"}`); }).join("")}</div>
             <div id="bd-etf-${gi}"></div>
             <details><summary style="font-size:13px;cursor:pointer">看每月底份额表</summary><div style="overflow-x:auto"><table class="bd-t"><tr><th>月份</th>${g.codes.map(c => `<th>${esc(c[1])}</th>`).join("")}<th>合计</th><th>当月变化</th></tr>${R.slice().reverse().map((row, i, a) => { const t = tot(row), p = a[i + 1] ? tot(a[i + 1]) : null; return `<tr><td>${row === R[R.length - 1] && row.ym === last.d.slice(0, 7) ? md(row.d) + "（本月至今）" : row.ym.slice(2).replace("-", "年") + "月"}</td>${g.codes.map(c => `<td>${row.v[c[0]] != null ? row.v[c[0]].toFixed(2) : "—"}</td>`).join("")}<td>${t.toFixed(2)}</td><td>${sg(p != null ? t - p : null, 2)}</td></tr>`; }).join("")}</table></div></details>`;
         }).join("") + `<div class="bd-src">每月取月底最后一个交易日的份额，本月为最新一天；数据来自上交所 ETF 规模日报，每天自动更新。份额增加一般被看作资金流入。</div>`;

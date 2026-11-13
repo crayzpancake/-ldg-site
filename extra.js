@@ -276,6 +276,7 @@
     try { history.replaceState(null, "", "#news"); } catch (e) {}
     let L = [];
     try { L = await getJSON("data/changelog.json"); } catch (e) {}
+    L = (L || []).map(x => ({ d: x.d, title: x.title || "", items: x.items || (x.x ? [x.x] : []) }));
     m.innerHTML = `<section class="box"><h2>🆕 更新说明 <small>每次更新了什么 · 点“复制”可直接转发</small></h2>
       ${L.map((x, i) => `<div class="nw"><h3>${md(x.d)} ${esc(x.title)}</h3><ul>${x.items.map(t => `<li>${rich(t)}</li>`).join("")}</ul><button data-i="${i}">📋 复制这条</button></div>`).join("") || `<div class="empty">暂无</div>`}</section>`;
     m.querySelectorAll(".nw button").forEach(b => b.onclick = async () => {

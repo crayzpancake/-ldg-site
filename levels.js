@@ -106,12 +106,15 @@
   async function pull(el, IDX) {
     if (!document.body.contains(el)) { clearInterval(timer); timer = null; return; }
     const codes = (IDX.levels || []).map(x => x.code).filter(Boolean);
-    try {
-      const r = await fetch("/api/quote?s=" + codes.join(","), { cache: "no-store" });
-      if (!r.ok) throw new Error(r.status);
-      const j = await r.json();
-      Object.assign(Q, j.q || {}); at = Date.now(); fail = !Object.keys(j.q || {}).length;
-    } catch (e) { fail = true; }
+    let j = null;
+    for (let att = 0; att < 2 && !j; att++) {
+      try {
+        const r = await fetch("/api/quote?s=" + codes.join(","), { cache: "no-store" });
+        if (!r.ok) throw new Error(r.status);
+        j = await r.json();
+      } catch (e) { if (!att) await new Promise(rs => setTimeout(rs, 1200)); }
+    }
+    if (j) { Object.assign(Q, j.q || {}); at = Date.now(); fail = !Object.keys(j.q || {}).length; } else fail = true;
     paint(el, IDX);
   }
 

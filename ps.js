@@ -13,11 +13,12 @@ function stack(host,cols,onPick,sel){
   /* 小卡片：每类一张，大数字=最新占比，折线=一年走势 */
   host.innerHTML=`<div class="sm">${CATS.map(k=>`<div class="sm-c" data-k="${k}"></div>`).join("")}</div>`;
   const real=cols.filter(c=>!c.est),est=cols.find(c=>c.est);
+  const lastSrc=est||real[real.length-1];const rawP=CATS.map(k=>lastSrc.p[k]);const baseP=rawP.map(v=>Math.floor(v));let remP=100-baseP.reduce((a,b)=>a+b,0);const ordP=CATS.map((k,i)=>[rawP[i]-baseP[i],i]).sort((a,b)=>b[0]-a[0]);const dispP={};CATS.forEach((k,i)=>dispP[k]=baseP[i]);for(let j2=0;j2<remP&&j2<ordP.length;j2++)dispP[CATS[ordP[j2][1]]]++;
   const mxAll=Math.max(...cols.flatMap(c=>CATS.map(k=>c.p[k])));
   CATS.forEach(k=>{
     const card=host.querySelector(`[data-k="${k}"]`);const first=real[0].p[k],last=(est||real[real.length-1]).p[k],d=last-first;
     const peak=real.reduce((a,c)=>c.p[k]>a.p[k]?c:a,real[0]);
-    card.innerHTML=`<div class="sm-h"><span><i class="sw" style="background:${COL[k]}"></i>${k}</span><span class="sm-d ${d>=0?"up":"dn"}">${d>=0?"▲":"▼"}${Math.abs(d).toFixed(0)}</span></div><div class="sm-v">${last.toFixed(0)}<small>%</small></div><div class="sm-s">一年前 ${first.toFixed(0)}% · 最高 ${peak.p[k].toFixed(0)}%（${lab(peak.ym)}）</div><div class="sm-g"></div>`;
+    card.innerHTML=`<div class="sm-h"><span><i class="sw" style="background:${COL[k]}"></i>${k}</span><span class="sm-d ${d>=0?"up":"dn"}">${d>=0?"▲":"▼"}${Math.abs(d).toFixed(0)}</span></div><div class="sm-v">${dispP[k]}<small>%</small></div><div class="sm-s">一年前 ${first.toFixed(0)}% · 最高 ${peak.p[k].toFixed(0)}%（${lab(peak.ym)}）</div><div class="sm-g"></div>`;
     const g=card.querySelector(".sm-g");const W=Math.max(120,g.clientWidth),H=54;
     const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,width:"100%",height:H},g);
     const X=i=>4+(W-8)*i/(cols.length-1),Y=v=>H-4-(H-10)*v/mxAll;

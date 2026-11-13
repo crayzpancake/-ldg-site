@@ -60,12 +60,12 @@ window.renderTodayPaper=function(D,IDX){
   <div class="th-actions"><button type="button" onclick="window.__dayMode='text';window.__go('${D.date}')">📝 看今日文字版</button><button type="button" class="alt" onclick="window.__go('track')">📌 看价位离多远</button><button type="button" class="alt" onclick="window.__go('charts')">📊 看图表</button></div></section>`;
   return hero+window.renderInfographic(D);
 };
+async function quoteJSON(codes){let err;for(let i=0;i<2;i++){try{const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return await r.json();}catch(e){err=e;if(!i)await new Promise(rs=>setTimeout(rs,1200));}}throw err;}
 window.refreshTodayPaper=async function(){
   const els=[...document.querySelectorAll("[data-today-code]")];if(!els.length)return;
   const codes=[...new Set(els.map(e=>e.dataset.todayCode))];
   try{
-    const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);
-    const j=await r.json(),Q=j.q||{};
+    const j=await quoteJSON(codes),Q=j.q||{};
     els.forEach(e=>{const q=Q[e.dataset.todayCode];const sub=document.querySelector(`[data-today-sub="${e.dataset.todayCode}"]`);
       if(!q||!(q.px>0)){e.textContent="暂未刷到";return;}
       e.textContent=q.px.toFixed(2);
@@ -108,8 +108,7 @@ window.refreshWatch=async function(){
   const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;
   const codes=[...new Set(els.map(e=>e.dataset.code))];
   try{
-    const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);
-    const j=await r.json(),Q=j.q||{};
+    const j=await quoteJSON(codes),Q=j.q||{};
     els.forEach(e=>{
       const q=Q[e.dataset.code];
       if(!q||!(q.px>0)){e.textContent="现价暂时连不上";return;}
