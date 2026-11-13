@@ -59,6 +59,14 @@
       const a = g(5500), b = g(5000), c = g(4500);
       if (a[0]) coal[d] = { d, q5500: a[0], c5500: a[1], q5000: b[0], c5000: b[1], q4500: c[0], c4500: c[1], src: "他发的CCI" };
     }));
+    // CCTD 现货：他帖子原文里带数（「CCTD环渤海动力煤现货参考价…5500K 1026 (+2)」），自动解析，不再靠截图手填；market.json 的 coal_snap 只作兜底
+    Object.values(cache || {}).forEach(D => D && D.posts.forEach(p => {
+      const t = (String(p.x || "") + " " + String(p.note || "") + " " + (D.highlights || []).join(" ")).replace(/<\/?b>/g, "");
+      if (!/CCTD/.test(t)) return;
+      const g = k => { const r = t.match(new RegExp(k + "[:：]?\\s*(\\d{3,4})\\s*[（(][^）)]*?([+-]\\d+)")); if (r) return [+r[1], +r[2]]; const r2 = t.match(new RegExp(k + "[:：]?\\s*(\\d{3,4})")); return r2 ? [+r2[1], null] : [null, null]; };
+      const a = g("5500K"), b = g("5000K"), c = g("4500K");
+      if (a[0] && !coal[D.date]) coal[D.date] = { d: D.date, q5500: a[0], c5500: a[1], q5000: b[0], c5000: b[1], q4500: c[0], c4500: c[1], src: "他发的CCTD" };
+    }));
     if (M.coal_snap && !coal[M.coal_snap.d]) coal[M.coal_snap.d] = { ...M.coal_snap };
     const C = Object.values(coal).sort((a, b) => a.d.localeCompare(b.d));
     const L = C[C.length - 1], LT = M.coal_lt;
@@ -69,7 +77,7 @@
       ${M.jjt ? `<div class="bd-sub">金鸡滩坑口价（${md(M.jjt.d)}）</div><div class="bd-cards">${M.jjt.items.map(x => card(x.n, x.v, "", sg(x.c))).join("")}</div>` : ""}
       <div class="bd-sub">5500大卡走势</div><div id="bd-cci"></div><div class="bd-src" style="margin-top:0">他的判断：这波煤价差不多见顶，但 <b>880 很难跌破</b>。</div>
       <details><summary style="font-size:13px;cursor:pointer;margin-top:6px">看最近 10 天</summary>      <table class="bd-t"><tr><th>日期</th><th>5500</th><th>涨跌</th><th>5000</th><th>4500</th></tr>${C.slice(-10).reverse().map(r => `<tr><td>${md(r.d)}</td><td>${r.q5500}</td><td>${sg(r.c5500)}</td><td>${r.q5000 ?? "—"}</td><td>${r.q4500 ?? "—"}</td></tr>`).join("")}</table></details>
-      <div class="bd-src">日价来自他每天发的 CCI 指数；长协和金鸡滩价格来自他转发的数据截图${M.coal_lt ? "（" + esc(M.coal_lt.src) + "）" : ""}。</div>`;
+      <div class="bd-src">日价来自他每天发的 CCI 指数，CCTD 现货来自他帖子原文（自动解析）；长协和金鸡滩价格来自他转发的数据截图${M.coal_lt ? "（" + esc(M.coal_lt.src) + "）" : ""}。</div>`;
     wrap.appendChild(coalSec);
     const cci = C.filter(r => r.q5500).map(r => ({ d: r.d, y: r.q5500, chg: r.c5500 }));
     if (cci.length > 2 && window.lineChart) window.lineChart(coalSec.querySelector("#bd-cci"), cci, { unit: "" });

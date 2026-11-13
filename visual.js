@@ -73,10 +73,10 @@ const refOf=w=>{const all=String(w.px||"").match(/\d[\d,]*\.?\d*/g);return all?p
 window.renderWatch=function(IDX){
   const W=(IDX.watch||[]).slice().sort((a,b)=>b.d.localeCompare(a.d));if(!W.length)return"";
   return `<section class="wl"><div class="wl-h">🎯 他想买 / 想加仓的 <small>重点关注 · ${W.length} 个</small></div>
-  ${W.map(w=>{const mt=meta(w),ref=refOf(w);return `<a class="wl-i" href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener"><div class="wl-t"><b class="wl-n">${esc(w.name)}</b><span class="wl-s">${esc(w.st)}</span></div>
+  ${W.map(w=>{const mt=meta(w),ref=refOf(w);return `<article class="wl-i"><div class="wl-t"><b class="wl-n">${esc(w.name)}</b><span class="wl-s">${esc(w.st)}</span></div>
    ${w.lv?`<div class="wl-lv">🎯 ${esc(w.lv)}${w.px?` <span>· 参考 ${esc(w.px)}</span>`:""}</div>`:(w.px?`<div class="wl-lv"><span>参考 ${esc(w.px)}</span></div>`:"")}
    ${mt.code?`<div class="wl-live" data-code="${esc(mt.code)}" data-rn="${esc(mt.rn)}" data-ref="${ref==null?"":ref}">现价读取中…</div>`:""}
-   <div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · 原文 ›</div></a>`;}).join("")}</section>`;
+   <div class="wl-x">${rich(w.x)}</div><div class="wl-d">${+w.d.slice(5,7)}/${+w.d.slice(8)} · <a href="https://weibo.com/3962719063/${w.b}" target="_blank" rel="noopener">原文 ›</a></div></article>`;}).join("")}</section>`;
 };
 window.refreshWatch=async function(){
   const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;

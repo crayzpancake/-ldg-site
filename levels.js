@@ -41,6 +41,7 @@
 .lv-src{margin-top:6px;font-size:12px;color:var(--mute)}
 .lv-src a{color:var(--mute)}
 .lv-note{font-size:12px;color:var(--mute);margin-top:8px}
+.lv-hits{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6}.lv-hits b{color:var(--red)}
 @media (min-width:700px){.lv-grid{grid-template-columns:1fr 1fr}}
 `;
   function addCss() {
@@ -84,10 +85,13 @@
 
   function paint(el, IDX) {
     const L = IDX.levels || [];
-    const hits = L.reduce((n, x) => n + (x.lv || []).filter(v => { const q = Q[x.code]; return q && q.px > 0 && (v.k === "buy" ? q.px <= v.p : q.px >= v.p); }).length, 0);
+    const hitList = [];
+    L.forEach(x => (x.lv || []).forEach(v => { const q = Q[x.code]; if (q && q.px > 0 && (v.k === "buy" ? q.px <= v.p : q.px >= v.p)) hitList.push({ name: x.name, a: v.a, p: v.p, unit: x.unit, px: q.px, k: v.k }); }));
+    const hits = hitList.length;
+    const hitBar = hits ? `<div class="lv-hits">🔔 <b>已到他提过的价位（${hits} 个）</b>：${hitList.map(h => `${esc(h.name)}「${esc(h.a)} ${h.p}${h.unit === "元/克" ? " 元/克" : " 元"}」，现价 ${f2(h.px, h.unit)} 已${h.k === "buy" ? "在其下" : "在其上"}`).join("；")}</div>` : "";
     const t = at ? new Date(at) : null;
     el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${fail ? "行情暂时连不上" : (t ? `实时 · ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")} 更新` : "读取行情…")}</small></h2>
-      <div class="lv-grid">${L.map(cardHTML).join("")}</div>
+      ${hitBar}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
       <div class="lv-note">绿色 = 他提过的买入/加仓相关价位，红色 = 他提过的目标价；百分比是现价离该价位的距离，条越满离得越近。这些是他在不同时间、不同前提下随口提到的参考位，不是操作信号，他也可能随时改变想法。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理公开发言，不构成投资建议，请勿据此去打扰博主本人。</div>
     </section>`;
   }

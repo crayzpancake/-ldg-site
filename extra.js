@@ -55,7 +55,9 @@
     try { history.replaceState(null, "", "#s=" + encodeURIComponent(q)); } catch (e) {}
     const inp = document.querySelector(".srch input"); if (inp) inp.value = q;
     m.innerHTML = `<div class="empty">正在搜索 ${IDX.days.length} 天的微博…</div>`;
-    const all = await Promise.all(IDX.days.map(d => cache[d.date] ? cache[d.date] : getJSON(`data/${d.date}.json`).then(j => (cache[d.date] = j)).catch(() => null)));
+    let all = null;
+    try { if (!window.__sidx) window.__sidx = await getJSON("data/search-index.json"); all = window.__sidx; } catch (e) {}
+    if (!all) all = await Promise.all(IDX.days.map(d => cache[d.date] ? cache[d.date] : getJSON(`data/${d.date}.json`).then(j => (cache[d.date] = j)).catch(() => null)));
     const words = q.split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
     const re = new RegExp("(" + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
     const hl = s => esc(plain(s)).replace(re, "<mark>$1</mark>");
