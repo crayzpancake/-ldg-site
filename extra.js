@@ -27,6 +27,12 @@
 .sr-hit mark{background:#ffe08a;color:#000;border-radius:2px;padding:0 1px}
 .sr-day{font-weight:700;margin:14px 0 2px;font-size:14px}
 .sr-day a{color:inherit}
+.sr-f{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 2px;font-size:13px;color:var(--mute)}
+.sr-f select{font:inherit;font-size:13.5px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.sr-syn{font-size:12.5px;color:var(--mute);margin:2px 0 4px}
+.sr-recent{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:5px 0 0;font-size:12px;color:var(--mute)}
+.sr-recent button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:12.5px;cursor:pointer}
+
 .rv-t{width:100%;border-collapse:collapse;font-size:13.5px}
 .rv-t td,.rv-t th{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
 .rv-t th{font-size:12px;color:var(--mute);font-weight:400}
@@ -48,35 +54,63 @@
     f.innerHTML = `<input type="search" placeholder="搜他说过的话：云铝、0.618、黄金防线…" enterkeyhint="search"><button>🔍 搜索</button>`;
     f.onsubmit = e => { e.preventDefault(); const q = f.querySelector("input").value.trim(); if (q) window.doSearch(q); };
     h.appendChild(f);
+    const rc = document.createElement("div"); rc.className = "sr-recent"; rc.id = "sr-recent"; h.appendChild(rc);
+    window.__srRecent = () => { let r = []; try { r = JSON.parse(localStorage.getItem("ldg_recent") || "[]"); } catch (e) {}
+      rc.innerHTML = r.length ? "最近搜过：" + r.map(x => `<button type="button">${esc(x)}</button>`).join("") : "";
+      rc.querySelectorAll("button").forEach(b => b.onclick = () => window.doSearch(b.textContent)); };
+    window.__srRecent();
   }
+  const SYN = { "正宫": "神华", "西宫": "中煤", "旧爱": "陕煤", "西安电厂": "陕西能源", "绿铝": "云铝", "门窗": "神火", "易拉罐": "中孚", "喷吹": "潞安", "仙晶": "现金", "类现金": "长江电力", "大水电": "长江电力", "海狗": "中远海控", "猛男": "内蒙华电" };
+  const variants = w => { const vs = new Set([w]); if (SYN[w]) vs.add(SYN[w].toLowerCase());
+    Object.entries(SYN).forEach(([k, v]) => { if (v.toLowerCase() === w) vs.add(k.toLowerCase()); }); return [...vs]; };
   window.doSearch = async function (q) {
     const m = document.getElementById("main");
     document.querySelectorAll("#tabs button").forEach(b => b.classList.remove("on"));
+    document.querySelectorAll("#bottomNav button").forEach(b => b.classList.toggle("on", b.dataset.bn === "search"));
     try { history.replaceState(null, "", "#s=" + encodeURIComponent(q)); } catch (e) {}
     const inp = document.querySelector(".srch input"); if (inp) inp.value = q;
-    m.innerHTML = `<div class="empty">正在搜索 ${IDX.days.length} 天的微博…</div>`;
+    try { let r = JSON.parse(localStorage.getItem("ldg_recent") || "[]"); r = [q, ...r.filter(x => x !== q)].slice(0, 6); localStorage.setItem("ldg_recent", JSON.stringify(r)); if (window.__srRecent) window.__srRecent(); } catch (e) {}
+    m.innerHTML = window.skeletonHTML ? window.skeletonHTML() : '<div class="empty">正在搜索…</div>';
     let all = null;
     try { if (!window.__sidx) window.__sidx = await getJSON("data/search-index.json"); all = window.__sidx; } catch (e) {}
     if (!all) all = await Promise.all(IDX.days.map(d => cache[d.date] ? cache[d.date] : getJSON(`data/${d.date}.json`).then(j => (cache[d.date] = j)).catch(() => null)));
     const words = q.split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
-    const re = new RegExp("(" + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
-    const hl = s => esc(plain(s)).replace(re, "<mark>$1</mark>");
-    const groups = [];
-    let n = 0;
+    const wgroups = words.map(variants);
+    const synNotes = []; words.forEach((w, i2) => { const ex = wgroups[i2].filter(v => v !== w); if (ex.length) synNotes.push(w + " → " + ex.join("/")); });
+    const allVars = [...new Set(wgroups.flat())];
+    const re = new RegExp("(" + allVars.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
+    const hl = s2 => esc(plain(s2)).replace(re, "<mark>$1</mark>");
+    const groups = []; let n = 0;
     all.filter(Boolean).sort((a, b) => b.date.localeCompare(a.date)).forEach(D => {
       const hits = D.posts.filter(p => {
         const t = (plain(p.x) + " " + plain(p.q) + " " + plain(p.note) + " " + plain(p.src && p.src.x)).toLowerCase();
-        return words.every(w => t.includes(w));
+        return wgroups.every(vs => vs.some(v => t.includes(v)));
       });
       if (hits.length) { groups.push([D, hits]); n += hits.length; }
     });
-    m.innerHTML = `<section class="box"><h2>🔍 “${esc(q)}” <small>找到 ${n} 条，${groups.length} 天</small></h2>
-      ${groups.length ? groups.slice(0, 60).map(([D, hs]) => `<div class="sr-day"><a href="#d${D.date.replace(/-/g, "")}" onclick="event.preventDefault();window.__goDay('${D.date}')">${md(D.date)} ${esc(D.weekday || "")}</a> · ${hs.length}条</div>
-        ${hs.map(p => `<div class="sr-hit"><div class="sr-m"><span>${esc(p.t)} · ${esc(p.c || "")}${p.s === "xq" ? " · 雪球" : ""}</span><a href="${wlink(p.b, p.s)}" target="_blank" rel="noopener">原文</a></div>
-          ${p.q ? `<div style="color:var(--mute)">问：${hl(p.q)}</div>` : ""}<div>${hl(p.x)}</div>${p.src ? `<div style="color:var(--mute);font-size:13px">${esc(p.src.u)}：${hl(String(p.src.x || "").slice(0, 200))}</div>` : ""}</div>`).join("")}`).join("")
-        : `<div class="empty">没找到，换个词试试（可以用空格分开多个词，比如“云铝 分红”）</div>`}
-    </section>`;
+    window.__sr = { q, groups, n, hl, synNotes };
+    paintSr("全部", "全部");
   };
+  function paintSr(cat, when) {
+    const S = window.__sr; if (!S) return; const m = document.getElementById("main");
+    const cats = ["全部", ...new Set(S.groups.flatMap(([D, hs]) => hs.map(p => p.c || "闲聊")))];
+    const maxD = S.groups.length ? S.groups[0][0].date : "";
+    const cut = when === "全部" ? null : new Date(new Date(maxD + "T12:00:00+08:00").getTime() - (+when) * 864e5).toISOString().slice(0, 10);
+    let fn = 0;
+    const fg = S.groups.map(([D, hs]) => { if (cut && D.date < cut) return null; const f = hs.filter(p => cat === "全部" || (p.c || "闲聊") === cat); if (!f.length) return null; fn += f.length; return [D, f]; }).filter(Boolean);
+    m.innerHTML = `<section class="box"><h2>🔍 “${esc(S.q)}” <small>找到 ${fn} 条，${fg.length} 天${fn !== S.n ? `（未筛选共 ${S.n} 条）` : ""}</small></h2>
+      ${S.synNotes.length ? `<div class="sr-syn">已按外号扩展：${S.synNotes.map(esc).join("；")}</div>` : ""}
+      <div class="sr-f"><label>分类 <select id="sr-cat">${cats.map(c => `<option ${c === cat ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+      <label>时间 <select id="sr-when">${[["全部", "全部时间"], ["7", "近7天"], ["30", "近30天"], ["90", "近90天"]].map(([v, l]) => `<option value="${v}" ${v === when ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      ${fg.length ? fg.slice(0, 60).map(([D, hs]) => `<div class="sr-day"><a href="#d${D.date.replace(/-/g, "")}" onclick="event.preventDefault();window.__goDay('${D.date}')">${md(D.date)} ${esc(D.weekday || "")}</a> · ${hs.length}条</div>
+        ${hs.map(p => `<div class="sr-hit"><div class="sr-m"><span>${esc(p.t)} · ${esc(p.c || "")}${p.s === "xq" ? " · 雪球" : ""}</span><a href="${wlink(p.b, p.s)}" target="_blank" rel="noopener">原文</a></div>
+          ${p.q ? `<div style="color:var(--mute)">问：${S.hl(p.q)}</div>` : ""}<div>${S.hl(p.x)}</div>${p.src ? `<div style="color:var(--mute);font-size:13px">${esc(p.src.u)}：${S.hl(String(p.src.x || "").slice(0, 200))}</div>` : ""}</div>`).join("")}`).join("")
+        : `<div class="empty">${S.n ? "这个筛选下没有，换个分类或时间试试" : "没找到，换个词试试（可以用空格分开多个词，比如“云铝 分红”；搜外号也可以，比如“正宫”）"}</div>`}
+    </section>`;
+    const c1 = m.querySelector("#sr-cat"), c2 = m.querySelector("#sr-when");
+    if (c1) c1.onchange = e => paintSr(e.target.value, c2.value);
+    if (c2) c2.onchange = e => paintSr(c1.value, e.target.value);
+  }
 
   // ---------- 铜价走势 ----------
   window.renderCopper = async function (main, IDX, cache) {
@@ -260,7 +294,7 @@
   const TOPICS = { "全部": null, "黄金分割/关口": /黄金分割|0\.618|0\.382|0\.5|关口|腰斩|支撑/, "估值/PE": /估值|PE|PB|市盈|便宜|低估/, "建仓与仓位": /建仓|加仓|减仓|仓位|金字塔|满仓|轻仓/, "分红/股息": /分红|股息|盒饭|红利|息/, "心态与原则": /原则|认错|错了|心态|耐心|拿着|不懂|教训/ };
   window.renderMethod = async function () {
     const m = document.getElementById("main");
-    m.innerHTML = `<div class="empty">正在整理他讲过的方法…</div>`;
+    m.innerHTML = window.skeletonHTML ? window.skeletonHTML() : `<div class="empty">正在整理他讲过的方法…</div>`;
     const all = await Promise.all(IDX.days.map(d => cache[d.date] ? cache[d.date] : getJSON(`data/${d.date}.json`).then(j => (cache[d.date] = j)).catch(() => null)));
     const items = [];
     all.filter(Boolean).forEach(D => D.posts.forEach(p => { if (p.c === "方法论") items.push({ d: D.date, ...p }); }));
