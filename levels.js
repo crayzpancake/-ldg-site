@@ -4,6 +4,41 @@
   const rich = s => esc(s).replace(/&lt;(\/?)b&gt;/g, "<$1b>");
   const link = b => `https://weibo.com/3962719063/${b}`;
   let timer = null, Q = {}, at = 0, fail = false;
+  let HITREC = null, hitPromise = null;
+  // 到价记录：用日K的最高/最低判断盘中是否触及他给过的价位（自他说出那天之后算）
+  window.LDGhits = function (IDX) {
+    if (hitPromise) return hitPromise;
+    hitPromise = (async () => {
+      const L = (IDX.levels || []).filter(x => x.code && (x.lv || []).length);
+      if (!L.length) return [];
+      const codes = [...new Set(L.map(x => x.code))];
+      let K = {};
+      try { const r = await fetch("/api/kline?s=" + codes.join(",") + "&n=400"); if (!r.ok) throw new Error(r.status); K = (await r.json()).k || {}; } catch (e) { return []; }
+      const evs = [];
+      L.forEach(x => {
+        const rows = K[x.code] || [];
+        (x.lv || []).forEach(v => {
+          let lastTouch = -99, cur = null;
+          rows.forEach((rw, i) => {
+            if (rw[0] <= (x.d || "")) return;
+            const touched = v.k === "buy" ? rw[3] <= v.p : rw[2] >= v.p;
+            if (touched) {
+              if (i - lastTouch > 5) { cur = { date: rw[0], name: x.name, a: v.a, p: v.p, unit: x.unit, k: v.k, days: 1 }; evs.push(cur); }
+              else if (cur) cur.days++;
+              lastTouch = i;
+            }
+          });
+        });
+      });
+      return evs.sort((a, b) => b.date.localeCompare(a.date));
+    })();
+    return hitPromise;
+  };
+  function recordsHTML() {
+    if (!HITREC || !HITREC.length) return "";
+    const rows = HITREC.slice(0, 15).map(e => `<div class="lv-rec"><span class="lv-rec-d">${e.date.slice(5).replace("-", "/")}</span><b>${esc(e.name)}</b><span class="tag ${e.k}">${esc(e.a)} ${e.p}${e.unit === "元/克" ? " 元/克" : " 元"}</span><span class="lv-rec-x">盘中已触及${e.days > 1 ? `，这一轮共 ${e.days} 天碰到` : ""}</span></div>`).join("");
+    return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录 <small>他说出价位之后，股价盘中第一次碰到它的日子（按日K最高/最低算）</small></div>${rows}</div>`;
+  }
   const SPARK = {}; let sparkBusy = false;
   function sparkSVG(rows){ const ys=rows.map(x=>x[1]); if(ys.length<3)return ""; const lo=Math.min(...ys),hi=Math.max(...ys),W=260,H=34; const pts=rows.map((x,i)=>`${(i/(rows.length-1)*W).toFixed(1)},${(H-3-(x[1]-lo)/((hi-lo)||1)*(H-6)).toFixed(1)}`).join(" "); const up=ys[ys.length-1]>=ys[0]; return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up?"#d00":"#1a9a4a"}" stroke-width="1.6"/></svg><div class="lv-spark-s">${rows[0][0].slice(5)} – ${rows[rows.length-1][0].slice(5)} · 近20个交易日收盘</div>`; }
   function cnNow(){ return new Date(Date.now()+8*3600e3); }
@@ -46,6 +81,12 @@
 .lv-src a{color:var(--mute)}
 .lv-note{font-size:12px;color:var(--mute);margin-top:8px}
 .lv-spark{margin-top:8px}.lv-spark-s{font-size:10.5px;color:var(--mute)}
+.lv-recs{margin:0 0 10px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--card)}
+.lv-recs-h{font-weight:700;font-size:14px;margin-bottom:5px}.lv-recs-h small{font-weight:400;color:var(--mute);font-size:12px}
+.lv-rec{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0;flex-wrap:wrap}
+.lv-rec-d{color:var(--mute);font-variant-numeric:tabular-nums}
+.lv-rec .tag{font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff}.lv-rec .tag.buy{background:#1a9a4a}.lv-rec .tag.sell{background:#d00}
+.lv-rec-x{color:var(--mute);font-size:12.5px}
 .lv-hits{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6}.lv-hits b{color:var(--red)}
 @media (min-width:700px){.lv-grid{grid-template-columns:1fr 1fr}}
 `;
@@ -98,7 +139,7 @@
     const tfmt = t ? (() => { const c = new Date(at + 8 * 3600e3); return `${String(c.getUTCHours()).padStart(2, "0")}:${String(c.getUTCMinutes()).padStart(2, "0")}:${String(c.getUTCSeconds()).padStart(2, "0")}`; })() : "";
     const status = fail ? (at ? `刷新失败 · 显示 ${tfmt} 的价格` : "行情暂时连不上") : (t ? `${mktStatus()} · ${tfmt} 刷新` : "读取行情…");
     el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${status}</small></h2>
-      ${hitBar}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
+      ${hitBar}${typeof HITREC !== "undefined" && HITREC ? recordsHTML() : ""}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
       <div class="lv-note">绿色 = 他提过的买入/加仓相关价位，红色 = 他提过的目标价；百分比是现价离该价位的距离，条越满离得越近。这些是他在不同时间、不同前提下随口提到的参考位，不是操作信号，他也可能随时改变想法。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理公开发言，不构成投资建议，请勿据此去打扰博主本人。</div>
     </section>`;
   }
@@ -125,6 +166,7 @@
   window.renderLevels = function (el, IDX) {
     if (!el || !(IDX.levels || []).length) return;
     addCss(); paint(el, IDX); pull(el, IDX); loadSparks(el, IDX);
+    window.LDGhits(IDX).then(ev => { HITREC = ev; if (document.body.contains(el)) paint(el, IDX); });
     clearInterval(timer);
     timer = setInterval(() => { if (!document.hidden) pull(el, IDX); }, 15000);
   };

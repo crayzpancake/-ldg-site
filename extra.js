@@ -332,3 +332,23 @@
   function boot() { header(); startGloss(); newsDot(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+
+// ⬇ 导出 CSV（追踪表 / 价位表），给读者自己拉表格分析
+window.__exportCSV = function (kind) {
+  const IDX = window.__IDX || {};
+  const cell = v => '"' + String(v ?? "").replace(/<\/?b>/g, "").replace(/"/g, '""') + '"';
+  let rows = [], name = "";
+  if (kind === "levels") {
+    rows = [["标的", "代码", "价位", "动作", "说明", "出处日期", "原文"]];
+    (IDX.levels || []).forEach(L => (L.lv || []).forEach(v => rows.push([L.name, L.code || "", v.p, v.a || "", v.n || "", L.d || "", "https://weibo.com/3962719063/" + (L.b || "")])));
+    name = "鹿鼎公-价位表.csv";
+  } else {
+    rows = [["主题", "日期", "内容", "原文"]];
+    (IDX.tracker || []).forEach(r => rows.push([r.a, r.d, r.x, "https://weibo.com/3962719063/" + (r.b || "")]));
+    name = "鹿鼎公-观点追踪表.csv";
+  }
+  const csv = "\ufeff" + rows.map(r => r.map(cell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+};

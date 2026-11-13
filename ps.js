@@ -90,6 +90,10 @@ window.renderPS=async function(main,getJSON){
     const i=ms.findIndex(x=>x.ym===sel),m=ms[i],prev=ms[i-1];
     const cols=ms.map(x=>({ym:x.ym,est:!!x.est,p:pct(x)}));
     main.innerHTML=`<div class="viz-root">
+     <section class="box" id="ps-calc"><h2>🧮 跟买计算器 <small>按最新一期（${ms[ms.length-1].ym}${ms[ms.length-1].est?"·估算":""}）仓位比例拆</small></h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px">我有 <input id="ps-amt" type="number" inputmode="numeric" value="100000" min="1000" step="1000" style="width:120px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:var(--card);color:var(--ink)"> 元 <button id="ps-go" type="button" style="background:var(--red);color:#fff;border:0;padding:8px 16px;border-radius:999px;font-size:14px">算一算</button><span style="color:var(--mute);font-size:12.5px">按现价、整手（100股）算；港股等站内无实时价的只给金额</span></div>
+      <div id="ps-calc-r" style="margin-top:8px"></div>
+      <div class="cap">仓位比例来自最新一期月底持仓${ms[ms.length-1].est?"（预测估算）":""}，他本人可能早已调仓；只帮你把比例换算成股数，不构成投资建议。</div></section>
      <section class="box"><h2>近一年仓位变化 <small>大数字=${(()=>{const L=ms[ms.length-1];return (+L.ym.slice(5))+"月"+(L.est?"（预测）":"")})()}占比 · 箭头=比一年前</small></h2><div id="ps-stack"></div>
       <div class="cap">折线是2025年10月→2026年10月每月底的占比，虚线段是10月估算（10月起不再发PS图）。点折线可切换下面的月份。</div></section>
      <section class="box"><h2>游戏仓总资产 <small>万元，每月底</small></h2><div id="ps-total"></div></section>
@@ -105,6 +109,27 @@ window.renderPS=async function(main,getJSON){
     const fit=()=>main.querySelectorAll(".mk-scroll").forEach(w=>{if(w.classList.contains("big"))return;const m=w.firstElementChild;const k=Math.min(1,w.clientWidth/840);m.style.transform=`scale(${k})`;w.style.height=(m.offsetHeight*k)+"px";});fit();window.addEventListener("resize",fit);main.querySelectorAll(".mk-scroll").forEach(w=>w.onclick=()=>{w.classList.toggle("big");if(!w.classList.contains("big"))fit();});
     main.querySelectorAll(".ps-r[data-note]").forEach(r=>tip(r,`<div class="tt-m">${r.dataset.note}</div>`));
     main.querySelectorAll(".ps-chips button").forEach(b=>b.onclick=()=>{sel=window.__psSel=b.dataset.ym;draw();});
+    const calcBtn=main.querySelector("#ps-go");
+    if(calcBtn)calcBtn.onclick=async()=>{
+      const out=main.querySelector("#ps-calc-r"); const amt=Math.max(0,+main.querySelector("#ps-amt").value||0);
+      if(!amt){out.innerHTML="先填一个金额";return;}
+      out.innerHTML="算账中（拉现价）…";
+      const L=ms[ms.length-1]; const base=(L.h||[]).reduce((a,x)=>a+(x.v>0?x.v:0),0)+(L.cash||0);
+      const CMAP={"中国神华":"sh601088","中煤能源":"sh601898","陕西煤业":"sh601225","潞安环能":"sh601699","陕西能源":"sh001286","内蒙华电":"sh600863","华能国际":"sh600011","长江电力":"sh600900","云铝股份":"sz000807","神火股份":"sz000933","中孚实业":"sh600595","紫金矿业":"sh601899","云天化":"sh600096","中远海控":"sh601919"};
+      const rows=(L.h||[]).filter(x=>x.v>0).map(x=>({n:x.n,w:x.v/base,money:amt*x.v/base,code:x.c==="现金类"?null:CMAP[x.n]||null,cash:x.c==="现金类"}));
+      const codes=[...new Set(rows.filter(r=>r.code).map(r=>r.code))]; let Q={};
+      if(codes.length){try{const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});const j=await r.json();Q=j.q||{};}catch(e){}}
+      let used=0,cashSum=0;
+      const trs=rows.map(r=>{
+        if(r.cash){cashSum+=r.money;return `<tr><td>${esc(r.n)}</td><td>${(r.w*100).toFixed(1)}%</td><td>${r.money.toFixed(0)}</td><td colspan="3" style="color:var(--mute)">现金类，留作现金</td></tr>`;}
+        const q=r.code?Q[r.code]:null;
+        if(q&&q.px>0){const sh=Math.floor(r.money/q.px/100)*100;const act=sh*q.px;used+=act;return `<tr><td>${esc(r.n)}</td><td>${(r.w*100).toFixed(1)}%</td><td>${r.money.toFixed(0)}</td><td>${q.px.toFixed(2)}</td><td>${sh} 股</td><td>${act.toFixed(0)}</td></tr>`;}
+        return `<tr><td>${esc(r.n)}</td><td>${(r.w*100).toFixed(1)}%</td><td>${r.money.toFixed(0)}</td><td colspan="3" style="color:var(--mute)">站内暂无实时价（多为港股），按金额自行下单</td></tr>`;}).join("");
+      const noPx=rows.filter(r=>!r.cash&&!(r.code&&Q[r.code]&&Q[r.code].px>0)).reduce((a,r)=>a+r.money,0);
+      const left=amt-used-cashSum-noPx;
+      out.innerHTML=`<table style="width:100%;font-size:13.5px"><tr style="color:var(--mute);text-align:left"><th>股票</th><th>占比</th><th>应配(元)</th><th>现价</th><th>股数</th><th>实际(元)</th></tr>${trs}<tr><td>现金（他留的现金部分）</td><td>${((L.cash||0)/base*100).toFixed(1)}%</td><td>${(amt*(L.cash||0)/base).toFixed(0)}</td><td colspan="3" style="color:var(--mute)">留现金</td></tr></table><div style="margin-top:6px;font-size:13.5px">股票实际买入约 <b>${used.toFixed(0)}</b> 元，现金类+现金约 <b>${(cashSum+amt*(L.cash||0)/base).toFixed(0)}</b> 元${noPx?`，无实时价部分约 <b>${noPx.toFixed(0)}</b> 元`:""}，整手取舍后剩余约 <b>${left.toFixed(0)}</b> 元。</div>`;
+    };
+
   };
   draw();
 };

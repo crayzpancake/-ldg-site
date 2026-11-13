@@ -88,6 +88,33 @@
     ["陕西能源", ["陕西能源", "西安电厂"]], ["内蒙华电", ["内蒙华电", "猛男", "猛电"]], ["华能国际", ["华能"]], ["长江电力", ["长江电力", "长电", "大水电", "类现金", "水电"]],
     ["云铝股份", ["云铝", "绿铝"]], ["神火股份", ["神火", "门窗"]], ["中孚实业", ["中孚", "易拉罐"]], ["电解铝", ["电解铝", "铝锭", "沪铝"]],
     ["紫金矿业", ["紫金"]], ["黄金", ["黄金", "金价"]], ["云天化", ["云天化", "磷肥", "磷化工"]], ["中远海控", ["中远海控", "海狗"]], ["券商", ["券商", "广发"]]];
+  const CODE = { "中国神华": "sh601088", "中煤能源": "sh601898", "陕西煤业": "sh601225", "潞安环能": "sh601699", "陕西能源": "sh001286", "内蒙华电": "sh600863", "华能国际": "sh600011", "长江电力": "sh600900", "云铝股份": "sz000807", "神火股份": "sz000933", "中孚实业": "sh600595", "电解铝": "sz000807", "紫金矿业": "sh601899", "黄金": "nf_AU0", "云天化": "sh600096", "中远海控": "sh601919" };
+  async function stkPanel(box, code, name, dates, lv, unit) {
+    if (!box) return;
+    let px = null;
+    try { const r = await fetch("/api/quote?s=" + code, { cache: "no-store" }); const j = await r.json(); const q = (j.q || {})[code]; if (q && q.px > 0) px = q; } catch (e) {}
+    const pxEl = box.querySelector(".stk-px");
+    if (pxEl) pxEl.innerHTML = px ? `<b style="font-size:20px">${px.px.toFixed(2)}</b> <span style="color:${px.chg >= 0 ? "#d00" : "#1a9a4a"};font-weight:600">${px.chg >= 0 ? "+" : ""}${(+px.chg).toFixed(2)}%</span>${px.t ? ` <small style="color:var(--mute)">${esc(px.t)}</small>` : ""}` : "现价暂时连不上";
+    if (px && lv && lv.lv && lv.lv.length) {
+      const rows = box.querySelector(".stk-lvrows"); if (rows) rows.innerHTML = lv.lv.map(x => { const d = (x.p / px.px - 1) * 100; const hit = x.k === "buy" ? px.px <= x.p : px.px >= x.p; return `<div style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><span style="font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;background:${x.k === "buy" ? "#1a9a4a" : "#d00"}">${esc(x.a)}</span><span>${esc(x.txt || x.p)}${esc(unit || "元")}</span><span style="margin-left:auto;font-weight:700">${hit ? "现价已到位" : "离现价 " + Math.abs(d).toFixed(1) + "%"}</span></div>`; }).join("");
+    }
+    let rows = [];
+    try { const r = await fetch("/api/kline?s=" + code + "&n=250"); const j = await r.json(); rows = (j.k || {})[code] || []; } catch (e) {}
+    const cv = box.querySelector("#stk-k"); if (!cv || rows.length < 10) { const w = box.querySelector(".stk-kw"); if (w) w.style.display = "none"; return; }
+    const dpr = window.devicePixelRatio || 1, Wd = cv.clientWidth || 320, H = 120;
+    cv.width = Wd * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+    const ys = rows.map(r2 => r2[1]), lo = Math.min(...ys), hi = Math.max(...ys), rg = (hi - lo) || 1;
+    const X = i => 4 + i / (rows.length - 1) * (Wd - 8), Y = v => 10 + (hi - v) / rg * (H - 30);
+    ctx.strokeStyle = "#e3ddd2"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, Y(lo)); ctx.lineTo(Wd, Y(lo)); ctx.stroke();
+    ctx.strokeStyle = "#8a7f72"; ctx.lineWidth = 1.4; ctx.beginPath(); rows.forEach((r2, i) => i ? ctx.lineTo(X(i), Y(r2[1])) : ctx.moveTo(X(i), Y(r2[1]))); ctx.stroke();
+    const dset = new Set(dates);
+    ctx.fillStyle = "#d00";
+    rows.forEach((r2, i) => { if (dset.has(r2[0])) { ctx.beginPath(); ctx.arc(X(i), Y(r2[1]), 3, 0, 7); ctx.fill(); } });
+    if (lv && lv.lv) lv.lv.forEach(x => { if (x.p > lo && x.p < hi) { ctx.strokeStyle = x.k === "buy" ? "rgba(26,154,74,.55)" : "rgba(221,0,0,.55)"; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(0, Y(x.p)); ctx.lineTo(Wd, Y(x.p)); ctx.stroke(); ctx.setLineDash([]); } });
+    ctx.fillStyle = "#8a8580"; ctx.font = "10px sans-serif"; ctx.fillText(rows[0][0].slice(0, 7), 4, H - 4); const lt = rows[rows.length - 1][0].slice(0, 7); ctx.fillText(lt, Wd - ctx.measureText(lt).width - 4, H - 4);
+    ctx.fillText("高 " + hi.toFixed(2), 4, 12); ctx.fillText("低 " + lo.toFixed(2), 4, H - 16);
+  }
   window.renderStock = async function (m, IDX, name) {
     name = name || window.__stock || "云铝股份"; window.__stock = name;
     try { history.replaceState(null, "", "#stock=" + encodeURIComponent(name)); } catch (e) {}
@@ -104,9 +131,12 @@
     }));
     const hl = s => esc(plain(s)).replace(re, "<mark>$1</mark>");
     const lv = (IDX.levels || []).find(l => l.name === name || words.some(w => l.name.includes(w)));
-    m.querySelector("#stk-r").innerHTML = (lv ? `<div class="ps-why">📌 他提过的价位：${lv.lv && lv.lv.length ? lv.lv.map(x => `${esc(x.a)} ${x.txt || x.p}${esc(lv.unit)}`).join("；") : esc(lv.cond || "")}（详见「📌 价位/仓位追踪」）</div>` : "") +
+    const code = CODE[name];
+    const panel = code ? `<div class="ps-why" style="background:var(--card);border:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><b>${esc(name)}</b><span class="stk-px">现价读取中…</span>${name === "电解铝" ? `<small style="color:var(--mute)">代表标的：云铝股份</small>` : ""}</div><div class="stk-kw" style="margin-top:8px"><canvas id="stk-k" style="width:100%;display:block"></canvas><div style="font-size:11px;color:var(--mute)">近一年收盘线 · 红点 = 他提到这只股票的日子 · 虚线 = 他提过的价位</div></div><div class="stk-lvrows" style="margin-top:6px"></div></div>` : "";
+    m.querySelector("#stk-r").innerHTML = panel + (lv ? `<div class="ps-why">📌 他提过的价位：${lv.lv && lv.lv.length ? lv.lv.map(x => `${esc(x.a)} ${x.txt || x.p}${esc(lv.unit)}`).join("；") : esc(lv.cond || "")}（详见「📌 价位/仓位追踪」）</div>` : "") +
       `<div class="cap">共 ${hits.length} 条，新的在上</div>` +
       (hits.slice(0, 150).map(([D, p]) => `<div class="sr-hit"><div class="sr-m"><span><a href="#d${D.date.replace(/-/g, "")}" onclick="event.preventDefault();window.__goDay('${D.date}')">${md(D.date)}</a> ${esc(p.t)} · ${esc(p.c || "")}</span><a href="${wlink(p.b, p.s)}" target="_blank" rel="noopener">原文</a></div>${p.q ? `<div style="color:var(--mute)">问：${hl(p.q)}</div>` : ""}<div>${hl(p.x)}</div>${p.src ? `<div style="color:var(--mute);font-size:13px">${esc(p.src.u)}：${hl(String(p.src.x || "").slice(0, 200))}</div>` : ""}</div>`).join("") || `<div class="empty">还没有提到它的发言</div>`);
+    if (code) stkPanel(m.querySelector("#stk-r"), code, name, [...new Set(hits.map(h => h[0].date))], lv, lv ? lv.unit : "元");
   };
 
   // ---------- 分享单日 ----------

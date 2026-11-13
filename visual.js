@@ -48,6 +48,7 @@ window.renderInfographic=function(D){
 };
 
 window.renderTodayPaper=function(D,IDX){
+  window.__today=D;
   const buys=(D.posts||[]).filter(p=>p.buy);
   const W=(IDX.watch||[]).slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,3);
   const hero=`<section class="today-hero"><div class="th-top"><div class="today-seal">鹿</div><div><h1>今日一页纸</h1><div class="th-sub">${D.date} ${esc(D.weekday||"")} · 挖地瓜的超级鹿鼎公 · 共 ${D.count} 条微博</div></div><span class="today-status">${D.live?"实时更新中":"已整理"}</span></div>
@@ -57,7 +58,7 @@ window.renderTodayPaper=function(D,IDX){
     <div class="th-price"><div class="l">紫金矿业 · 现价</div><div class="v" data-today-code="sh601899">读取中</div><div class="s" data-today-sub="sh601899">有色龙头</div></div>
   </div>
   <div class="th-watch">${buys.length?`🎯 <b>今天他说想买/想加仓 ${buys.length} 条</b>，往下翻信息图里有原文。`:`🎯 今天没有新的想买/想加仓表态。`}${W.length?`<br>最近关注清单：${W.map(w=>`<b>${esc(String(w.name||"").replace(/（.*/,""))}</b>（${esc(w.st||"")}）`).join("、")}`:""}</div>
-  <div class="th-actions"><button type="button" onclick="window.__dayMode='text';window.__go('${D.date}')">📝 看今日文字版</button><button type="button" class="alt" onclick="window.__go('track')">📌 看价位离多远</button><button type="button" class="alt" onclick="window.__go('charts')">📊 看图表</button></div></section>`;
+  <div class="th-actions"><button type="button" onclick="window.makePoster&&window.makePoster()">🖼 生成转发图</button><button type="button" onclick="window.__dayMode='text';window.__go('${D.date}')">📝 看今日文字版</button><button type="button" class="alt" onclick="window.__go('track')">📌 看价位离多远</button><button type="button" class="alt" onclick="window.__go('charts')">📊 看图表</button></div></section>`;
   return hero+window.renderInfographic(D);
 };
 async function quoteJSON(codes){let err;for(let i=0;i<2;i++){try{const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return await r.json();}catch(e){err=e;if(!i)await new Promise(rs=>setTimeout(rs,1200));}}throw err;}
@@ -71,6 +72,64 @@ window.refreshTodayPaper=async function(){
       e.textContent=q.px.toFixed(2);
       if(sub)sub.textContent=`${q.chg!=null?(q.chg>=0?"+":"")+q.chg.toFixed(2)+"%":""}${q.t?" · "+q.t:""}`;});
   }catch(err){els.forEach(e=>e.textContent="暂未刷到");}
+  if(window.__awayCheck)window.__awayCheck();
+};
+// 🔔 回访提醒：上次访问之后、到今天之间，有价位被触及过就提示一句
+window.__awayCheck=async function(){
+  if(window.__awayDone)return; window.__awayDone=true;
+  try{
+    const cn=new Date(Date.now()+8*3600e3), today=cn.toISOString().slice(0,10);
+    const prev=localStorage.getItem("ldg_lastvisit"); localStorage.setItem("ldg_lastvisit",today);
+    if(!prev||prev>=today||!window.LDGhits||!window.__IDX)return;
+    const evs=await window.LDGhits(window.__IDX);
+    const mine=evs.filter(e=>e.date>prev&&e.date<=today).slice(0,3);
+    if(!mine.length)return;
+    const hero=document.querySelector(".today-hero"); if(!hero)return;
+    const div=document.createElement("div");
+    div.style.cssText="margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6";
+    div.innerHTML="🔔 <b>你不在时到价了</b>："+mine.map(e=>`${e.name}「${e.a} ${e.p}${e.unit==="元/克"?" 元/克":" 元"}」${e.date.slice(5).replace("-","/")} 盘中触及`).join("；")+" <a href=\"#track\" style=\"color:var(--red)\">去价位页看 ›</a>";
+    hero.parentNode.insertBefore(div,hero);
+  }catch(e){}
+};
+// 🖼 今日转发图：把一页纸画成竖版长图，方便存图转发
+window.makePoster=function(){
+  const D=window.__today; if(!D)return;
+  const W=1080,M=64,CW=W-M*2;
+  const cv=document.createElement("canvas"); const ctx=cv.getContext("2d");
+  const F=(px,w)=>`${w||400} ${px}px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif`;
+  const wrap=(text,px,max)=>{ctx.font=F(px);const out=[];let line="";for(const ch of String(text||"")){if(ctx.measureText(line+ch).width>max&&line){out.push(line);line=ch;}else line+=ch;}if(line)out.push(line);return out;};
+  const names={"sz000807":"云铝股份","nf_AU0":"黄金","sh601899":"紫金矿业"};
+  const prices=Object.keys(names).map(c=>{const v=document.querySelector(`[data-today-code="${c}"]`),sub=document.querySelector(`[data-today-sub="${c}"]`);return{name:names[c],v:v?v.textContent.trim():"—",s:sub?sub.textContent.trim():""};});
+  const hls=(D.highlights||[]).slice(0,3).map(h=>{const m=String(h).match(/^［(.+?)］(.*)$/);return m?{c:m[1],x:m[2]}:{c:"",x:String(h)};});
+  const hlLines=hls.map(h=>wrap((h.c?h.c+" · ":"")+STRIP(h.x),40,CW-70));
+  const buys=(D.posts||[]).filter(p=>p.buy).length;
+  let H=64+92+16+44+30+prices.length*64+36+ (buys?52:0) + hlLines.reduce((a,l)=>a+l.length*58+18,0) + 130;
+  cv.width=W; cv.height=H;
+  ctx.fillStyle="#faf7f1"; ctx.fillRect(0,0,W,H);
+  let y=64;
+  ctx.fillStyle="#c0392b"; ctx.beginPath(); if(ctx.roundRect)ctx.roundRect(M,y,92,92,14); else ctx.rect(M,y,92,92); ctx.fill();
+  ctx.fillStyle="#fff"; ctx.font=F(58,700); ctx.textAlign="center"; ctx.fillText("鹿",M+46,y+66); ctx.textAlign="left";
+  ctx.fillStyle="#1a1a1a"; ctx.font=F(56,700); ctx.fillText("今日一页纸",M+116,y+62);
+  ctx.fillStyle="#6e6862"; ctx.font=F(30); ctx.fillText(`${D.date} ${D.weekday||""} · 挖地瓜的超级鹿鼎公 · 共 ${D.count} 条微博`,M+118,y+98-34+38);
+  y+=92+30;
+  ctx.strokeStyle="#e3ddd2"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(W-M,y); ctx.stroke(); y+=26;
+  prices.forEach(p=>{ ctx.fillStyle="#6e6862"; ctx.font=F(32); ctx.fillText(p.name,M,y+38);
+    ctx.fillStyle="#1a1a1a"; ctx.font=F(44,700); const vw=ctx.measureText(p.v).width; ctx.fillText(p.v,W-M-vw,y+42);
+    ctx.fillStyle=p.s.startsWith("-")?"#1a9a4a":(p.s.startsWith("+")?"#d00":"#6e6862"); ctx.font=F(28); const sw=ctx.measureText(p.s).width; ctx.fillText(p.s,W-M-vw-18-sw,y+42); y+=64; });
+  y+=10;
+  if(buys){ ctx.fillStyle="#c0392b"; ctx.font=F(34,700); ctx.fillText(`🎯 今天他说想买 / 想加仓 ${buys} 条`,M,y+36); y+=52; }
+  ctx.fillStyle="#1a1a1a"; ctx.font=F(38,700); ctx.fillText("今日要点",M,y+40); y+=58;
+  hlLines.forEach((lines,i)=>{ ctx.fillStyle="#c0392b"; ctx.font=F(40,700); ctx.fillText(String(i+1),M,y+42);
+    ctx.fillStyle="#26221e"; ctx.font=F(40); lines.forEach((ln,j)=>ctx.fillText(ln,M+56,y+42+j*58)); y+=lines.length*58+18; });
+  y+=26; ctx.strokeStyle="#e3ddd2"; ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(W-M,y); ctx.stroke();
+  ctx.fillStyle="#6e6862"; ctx.font=F(28); ctx.fillText("鹿鼎公日报 · ludinggongfans.netlify.app",M,y+48);
+  ctx.fillStyle="#a39c92"; ctx.font=F(24); ctx.fillText("整理自公开微博，不构成投资建议",M,y+84);
+  const url=cv.toDataURL("image/png");
+  const ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px";
+  ov.innerHTML=`<img src="${url}" alt="今日转发图" style="max-width:min(92vw,430px);max-height:72vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.4)"><div style="display:flex;gap:10px"><a href="${url}" download="鹿鼎公日报-${D.date}.png" style="background:#c0392b;color:#fff;padding:10px 20px;border-radius:999px;font-size:15px;text-decoration:none">保存图片</a><button type="button" style="background:#fff;color:#222;padding:10px 20px;border-radius:999px;font-size:15px;border:0">关闭</button></div><div style="color:#ddd;font-size:13px">手机上也可以长按图片保存，再发到微信群</div>`;
+  ov.querySelector("button").onclick=()=>ov.remove(); ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
 };
 
 window.renderMindmap=function(IDX){
