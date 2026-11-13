@@ -95,7 +95,7 @@
     const hits = hitList.length;
     const hitBar = hits ? `<div class="lv-hits">🔔 <b>已到他提过的价位（${hits} 个）</b>：${hitList.map(h => `${esc(h.name)}「${esc(h.a)} ${h.p}${h.unit === "元/克" ? " 元/克" : " 元"}」，现价 ${f2(h.px, h.unit)} 已${h.k === "buy" ? "在其下" : "在其上"}`).join("；")}</div>` : "";
     const t = at ? new Date(at) : null;
-    const tfmt = t ? `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}` : "";
+    const tfmt = t ? (() => { const c = new Date(at + 8 * 3600e3); return `${String(c.getUTCHours()).padStart(2, "0")}:${String(c.getUTCMinutes()).padStart(2, "0")}:${String(c.getUTCSeconds()).padStart(2, "0")}`; })() : "";
     const status = fail ? (at ? `刷新失败 · 显示 ${tfmt} 的价格` : "行情暂时连不上") : (t ? `${mktStatus()} · ${tfmt} 刷新` : "读取行情…");
     el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${status}</small></h2>
       ${hitBar}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
