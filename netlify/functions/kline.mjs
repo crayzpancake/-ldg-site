@@ -11,15 +11,16 @@ async function stock(code, n) {
   const r = await fetch(`https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${code},day,,,${n},`, { headers: { referer: "https://gu.qq.com/" } });
   const j = await r.json();
   const d = j?.data?.[code];
+  const adj = !d?.day && !!d?.qfqday;
   const rows = d?.day || d?.qfqday || [];
-  return rows.map(x => [x[0], +x[2], +x[3], +x[4]]);          // [日期, 收盘, 最高, 最低]
+  return { rows: rows.map(x => [x[0], +x[2], +x[3], +x[4]]), adj };          // [日期, 收盘, 最高, 最低]
 }
 async function fut(code, n) {
   const sym = code.slice(3);
   const r = await fetch(`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_${sym}=/InnerFuturesNewService.getDailyKLine?symbol=${sym}`, { headers: { referer: "https://finance.sina.com.cn/" } });
   const t = await r.text();
   const a = JSON.parse(t.slice(t.indexOf("(") + 1, t.lastIndexOf(")")));
-  return a.slice(-n).map(x => [x.d, +x.c, +x.h, +x.l]);
+  return { rows: a.slice(-n).map(x => [x.d, +x.c, +x.h, +x.l]), adj: false };
 }
 
 export default async req => {
@@ -27,7 +28,7 @@ export default async req => {
   const n = Math.min(400, Math.max(10, +url.searchParams.get("n") || 120));
   const codes = [...new Set((url.searchParams.get("s") || "").split(",").filter(c => OK.test(c)))].slice(0, 12);
   if (!codes.length) return J({ error: "缺少代码" }, 400);
-  const k = {}, err = {};
-  await Promise.all(codes.map(c => (c.startsWith("nf_") ? fut(c, n) : stock(c, n)).then(v => { k[c] = v; }).catch(e => { err[c] = String(e); })));
-  return J({ k, err });
+  const k = {}, err = {}, adj = [];
+  await Promise.all(codes.map(c => (c.startsWith("nf_") ? fut(c, n) : stock(c, n)).then(v => { k[c] = v.rows; if (v.adj) adj.push(c); }).catch(e => { err[c] = String(e); })));
+  return J({ k, err, adj });
 };

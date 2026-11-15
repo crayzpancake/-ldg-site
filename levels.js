@@ -10,13 +10,15 @@
     if (hitPromise) return hitPromise;
     hitPromise = (async () => {
       const L = (IDX.levels || []).filter(x => x.code && (x.lv || []).length);
-      if (!L.length) return [];
+      if (!L.length) { hitPromise = null; return []; }
       const codes = [...new Set(L.map(x => x.code))];
       let K = {};
-      try { const r = await fetch("/api/kline?s=" + codes.join(",") + "&n=400"); if (!r.ok) throw new Error(r.status); K = (await r.json()).k || {}; } catch (e) { return []; }
+      let ADJ = new Set();
+      try { const r = await fetch("/api/kline?s=" + codes.join(",") + "&n=400"); if (!r.ok) throw new Error(r.status); const j = await r.json(); K = j.k || {}; ADJ = new Set(j.adj || []); } catch (e) { hitPromise = null; return []; }
       const evs = [];
       L.forEach(x => {
-        const rows = K[x.code] || [];
+        if (ADJ.has(x.code)) return;
+        const rows = [...(K[x.code] || [])].sort((a, b) => a[0].localeCompare(b[0]));
         (x.lv || []).forEach(v => {
           let lastTouch = -99, cur = null;
           rows.forEach((rw, i) => {
@@ -38,7 +40,7 @@
     if (!HITREC) return "";
     if (!HITREC.length) return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录</div><div style="font-size:13.5px;color:var(--mute)">暂时还没有——他给过的价位都还没被股价碰到。哪天碰到了，这里会自动记下来，你离开期间碰到的，首页也会提醒你。</div></div>`;
     const rows = HITREC.slice(0, 15).map(e => `<div class="lv-rec"><span class="lv-rec-d">${e.date.slice(5).replace("-", "/")}</span><b>${esc(e.name)}</b><span class="tag ${e.k}">${esc(e.a)} ${e.p}${e.unit === "元/克" ? " 元/克" : " 元"}</span><span class="lv-rec-x">盘中已触及${e.days > 1 ? `，这一轮共 ${e.days} 天碰到` : ""}</span></div>`).join("");
-    return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录 <small>他说出价位之后，股价盘中第一次碰到它的日子（按日K最高/最低算）</small></div>${rows}</div>`;
+    return `<div class="lv-recs"><div class="lv-recs-h">🔔 到价记录 <small>他说出价位的次日起，股价盘中第一次碰到它的日子（按日K最高/最低算）</small></div>${rows}</div>`;
   }
   const SPARK = {}; let sparkBusy = false;
   function sparkSVG(rows){ const ys=rows.map(x=>x[1]); if(ys.length<3)return ""; const lo=Math.min(...ys),hi=Math.max(...ys),W=260,H=34; const pts=rows.map((x,i)=>`${(i/(rows.length-1)*W).toFixed(1)},${(H-3-(x[1]-lo)/((hi-lo)||1)*(H-6)).toFixed(1)}`).join(" "); const up=ys[ys.length-1]>=ys[0]; return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up?"#d00":"#1a9a4a"}" stroke-width="1.6"/></svg><div class="lv-spark-s">${rows[0][0].slice(5)} – ${rows[rows.length-1][0].slice(5)} · 近20个交易日收盘</div>`; }

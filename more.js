@@ -35,7 +35,7 @@
     const d0 = (IDX.days.find(d => !d.live) || {}).date; if (!d0) return;
     const now = new Date(Date.now() + 8 * 3600e3), today = now.toISOString().slice(0, 10);
     const lag = Math.round((new Date(today) - new Date(d0)) / 864e5);
-    const wd = WD[new Date(d0 + "T12:00:00+08:00").getDay()];
+    const wd = WD[new Date(d0 + "T12:00:00+08:00").getUTCDay()];
     const el = document.createElement("span"); el.className = "upd";
     el.innerHTML = `📅 更新到 <b>${+d0.slice(5, 7)}月${+d0.slice(8, 10)}日（${wd}）</b>${lag >= 2 ? ` <span class="late">· 最近几天更新稍有延迟，会尽快补上</span>` : ""}`;
     const lk = h.querySelector(".hdr-links"); if (lk) { el.style.marginLeft = "auto"; el.style.alignSelf = "center"; lk.appendChild(el); } else h.appendChild(el);

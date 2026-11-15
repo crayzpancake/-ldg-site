@@ -166,8 +166,10 @@ window.renderWatch=function(IDX){
 window.refreshWatch=async function(){
   const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;
   const codes=[...new Set(els.map(e=>e.dataset.code))];
-  try{
-    const j=await quoteJSON(codes),Q=j.q||{};
+  let Q=null;
+  for(let a=0;a<4&&!Q;a++){try{const j=await quoteJSON(codes);Q=j.q||{};}catch(err){if(a<3)await new Promise(rs=>setTimeout(rs,1500*(a+1)));}}
+  if(!Q){els.forEach(e=>e.textContent="现价暂时连不上");return;}
+  {
     els.forEach(e=>{
       const q=Q[e.dataset.code];
       if(!q||!(q.px>0)){e.textContent="现价暂时连不上";return;}
@@ -186,7 +188,7 @@ window.refreshWatch=async function(){
       const i=bar.querySelector("i"); i.style.width=Math.max(4,100-Math.min(100,d*4))+"%"; i.style.background=q.px<=ref?"#1a9a4a":"var(--red)";
       bar.hidden=false;
     });
-  }catch(err){els.forEach(e=>e.textContent="现价暂时连不上");}
+  }
 };
 const WSPARK={};
 window.loadWatchSparks=async function(){

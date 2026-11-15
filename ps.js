@@ -114,7 +114,7 @@ window.renderPS=async function(main,getJSON){
       const out=main.querySelector("#ps-calc-r"); const amt=Math.max(0,+main.querySelector("#ps-amt").value||0);
       if(!amt){out.innerHTML="先填一个金额";return;}
       out.innerHTML="算账中（拉现价）…";
-      const L=ms[ms.length-1]; const base=(L.h||[]).reduce((a,x)=>a+(x.v>0?x.v:0),0)+(L.cash||0);
+      const L=ms[ms.length-1]; const cashExtra=(L.est?0:(L.cash||0)); const base=(L.h||[]).reduce((a,x)=>a+(x.v>0?x.v:0),0)+cashExtra;
       const CMAP={"中国神华":"sh601088","中煤能源":"sh601898","陕西煤业":"sh601225","潞安环能":"sh601699","陕西能源":"sh001286","内蒙华电":"sh600863","华能国际":"sh600011","长江电力":"sh600900","云铝股份":"sz000807","神火股份":"sz000933","中孚实业":"sh600595","紫金矿业":"sh601899","云天化":"sh600096","中远海控":"sh601919"};
       const rows=(L.h||[]).filter(x=>x.v>0).map(x=>({n:x.n,w:x.v/base,money:amt*x.v/base,code:x.c==="现金类"?null:CMAP[x.n]||null,cash:x.c==="现金类"}));
       const codes=[...new Set(rows.filter(r=>r.code).map(r=>r.code))]; let Q={};
@@ -126,8 +126,8 @@ window.renderPS=async function(main,getJSON){
         if(q&&q.px>0){const sh=Math.floor(r.money/q.px/100)*100;const act=sh*q.px;used+=act;return `<tr><td>${esc(r.n)}</td><td>${(r.w*100).toFixed(1)}%</td><td>${r.money.toFixed(0)}</td><td>${q.px.toFixed(2)}</td><td>${sh} 股</td><td>${act.toFixed(0)}</td></tr>`;}
         return `<tr><td>${esc(r.n)}</td><td>${(r.w*100).toFixed(1)}%</td><td>${r.money.toFixed(0)}</td><td colspan="3" style="color:var(--mute)">站内暂无实时价（多为港股），按金额自行下单</td></tr>`;}).join("");
       const noPx=rows.filter(r=>!r.cash&&!(r.code&&Q[r.code]&&Q[r.code].px>0)).reduce((a,r)=>a+r.money,0);
-      const left=amt-used-cashSum-noPx;
-      out.innerHTML=`<table style="width:100%;font-size:13.5px"><tr style="color:var(--mute);text-align:left"><th>股票</th><th>占比</th><th>应配(元)</th><th>现价</th><th>股数</th><th>实际(元)</th></tr>${trs}<tr><td>现金（他留的现金部分）</td><td>${((L.cash||0)/base*100).toFixed(1)}%</td><td>${(amt*(L.cash||0)/base).toFixed(0)}</td><td colspan="3" style="color:var(--mute)">留现金</td></tr></table><div style="margin-top:6px;font-size:13.5px">股票实际买入约 <b>${used.toFixed(0)}</b> 元，现金类+现金约 <b>${(cashSum+amt*(L.cash||0)/base).toFixed(0)}</b> 元${noPx?`，无实时价部分约 <b>${noPx.toFixed(0)}</b> 元`:""}，整手取舍后剩余约 <b>${left.toFixed(0)}</b> 元。</div>`;
+      const left=amt-used-cashSum-noPx-amt*cashExtra/base;
+      out.innerHTML=`<table style="width:100%;font-size:13.5px"><tr style="color:var(--mute);text-align:left"><th>股票</th><th>占比</th><th>应配(元)</th><th>现价</th><th>股数</th><th>实际(元)</th></tr>${trs}${cashExtra?`<tr><td>现金（他留的现金部分）</td><td>${(cashExtra/base*100).toFixed(1)}%</td><td>${(amt*cashExtra/base).toFixed(0)}</td><td colspan="3" style="color:var(--mute)">留现金</td></tr>`:""}</table><div style="margin-top:6px;font-size:13.5px">股票实际买入约 <b>${used.toFixed(0)}</b> 元，现金类+现金约 <b>${(cashSum+amt*cashExtra/base).toFixed(0)}</b> 元${noPx?`，无实时价部分约 <b>${noPx.toFixed(0)}</b> 元`:""}，整手取舍后剩余约 <b>${left.toFixed(0)}</b> 元。</div>`;
     };
 
   };
