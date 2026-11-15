@@ -351,7 +351,7 @@ function trackHTML(){
 async function go(v){
   cur=v; mark(v); if(window.hit)window.hit(/^\d/.test(v)?"day":v);
   const m=document.getElementById("main"); m.classList.remove("key-only");
-  if(v==="home"){ try{ if(location.hash!=="#home") history.replaceState(null,"","#home"); }catch(e){} const d=IDX.days[0]; if(!d){m.innerHTML=`<div class="empty">暂无数据</div>`;return;} m.innerHTML=`<div class="empty">正在整理今日一页纸…</div>`; try{ cache[d.date]=cache[d.date]||await getJSON(`data/${d.date}.json`); await loadTrack(); if(cur!=="home")return; m.innerHTML=window.renderTodayPaper(cache[d.date],IDX); if(window.refreshTodayPaper)window.refreshTodayPaper(); }catch(e){ if(cur==="home")m.innerHTML=`<div class="empty">今日数据读取失败，请稍后刷新</div>`; } return; }
+  if(v==="home"){ try{ if(location.hash!=="#home") history.replaceState(null,"","#home"); }catch(e){} const d=IDX.days[0]; if(!d){m.innerHTML=`<div class="empty">暂无数据</div>`;return;} return go(d.date); }
   const h=v==="home"?"home":(["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,""));
   if(v!=="stock"){try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}}
   if(v==="ops"){await loadTrack();window.renderOps(m,IDX);return;}
@@ -364,7 +364,7 @@ async function go(v){
   if(v==="ps"){await loadScript("ps.js?v=20261115-8");if(cur==="ps")window.renderPS(m,getJSON);return;}
   if(v==="method"){window.renderMethod();return;}
   m.innerHTML=daybar(v)+skeletonHTML(); wireDaybar(v);
-  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+(cache[v].live?`<div class="ps-why">⏱ 今天的微博实时更新中（约每小时一次），最近更新 ${cache[v].updated?new Date(cache[v].updated).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Shanghai"}):""}；第二天早上会整理成完整版。</div>`:"")+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});
+  try{ cache[v]=cache[v]||await getJSON(`data/${v}.json`); if(cur===v){ const mode=window.__dayMode||"ig"; m.innerHTML=daybar(v)+(cache[v].live?`<div class="ps-why">⏱ 今天的微博实时更新中（约每小时一次），最近更新 ${cache[v].updated?new Date(cache[v].updated).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Shanghai"}):""}；第二天早上会整理成完整版。</div>`:"")+`<div class="modesw"><button data-mode="ig" class="${mode==="ig"?"on":""}">🖼 信息图</button><button data-mode="text" class="${mode==="text"?"on":""}">📝 文字版</button></div>`+(mode==="ig"?window.renderInfographic(cache[v]):dayHTML(cache[v])); wireDaybar(v); if(window.__awayCheck)window.__awayCheck(); m.querySelectorAll(".modesw button").forEach(b=>b.onclick=()=>{window.__dayMode=b.dataset.mode;go(v);});
   if(mode==="text"){ const keyN=cache[v].posts.filter(p=>p.buy||/<b>/.test(p.x||"")||/(加仓|买入|建仓|减仓|卖出|止盈|清仓|满仓|仓位|价位|防线|关口)/.test(String(p.x||"").replace(/<[^>]+>/g,""))).length; const rb=document.createElement("div"); rb.className="readbar"; rb.innerHTML=`<button type="button" class="${window.__keyOnly?"on":""}">${window.__keyOnly?"⭐ 正在只看重点":"⭐ 只看重点"}</button><span class="cnt">重点 ${keyN} / 共 ${cache[v].posts.length} 条</span>`; const ms=m.querySelector(".modesw"); if(ms)ms.after(rb); if(window.__keyOnly)m.classList.add("key-only"); rb.querySelector("button").onclick=()=>{window.__keyOnly=!window.__keyOnly;go(v);}; }
   m.querySelectorAll(".post-more").forEach(b=>b.onclick=()=>{const p=b.closest(".post");p.classList.toggle("open");b.textContent=p.classList.contains("open")?"收起":"展开全文";});
   if(window.__postFocus){ const el=m.querySelector(`[data-post="${window.__postFocus}"]`); if(el){ const det=el.closest("details"); if(det)det.open=true; setTimeout(()=>{el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.add("post-focus");},80); } window.__postFocus=null; } } }
@@ -400,7 +400,7 @@ async function go(v){
   window.addEventListener("hashchange",routeFromHash);
 })();
 </script>
-<script src="visual.js?v=20261115-8"></script>
+<script src="visual.js?v=20261115-9"></script>
 <script src="extra.js?v=20261113-6"></script>
 <script src="levels.js?v=20261115-8"></script>
 <script src="more.js?v=20261115-8"></script>

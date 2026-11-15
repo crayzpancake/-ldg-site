@@ -62,6 +62,7 @@ window.renderTodayPaper=function(D,IDX){
   return hero+window.renderInfographic(D);
 };
 async function quoteJSON(codes){let err;for(let i=0;i<2;i++){try{const r=await fetch("/api/quote?s="+codes.join(","),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return await r.json();}catch(e){err=e;if(!i)await new Promise(rs=>setTimeout(rs,1200));}}throw err;}
+window.quoteJSON=quoteJSON;
 window.refreshTodayPaper=async function(){
   const els=[...document.querySelectorAll("[data-today-code]")];if(!els.length)return;
   const codes=[...new Set(els.map(e=>e.dataset.todayCode))];
@@ -84,11 +85,11 @@ window.__awayCheck=async function(){
     const evs=await window.LDGhits(window.__IDX);
     const mine=evs.filter(e=>e.date>prev&&e.date<=today).slice(0,3);
     if(!mine.length)return;
-    const hero=document.querySelector(".today-hero"); if(!hero)return;
+    const hero=document.querySelector(".today-hero"); const host=hero||document.querySelector("main"); if(!host)return;
     const div=document.createElement("div");
     div.style.cssText="margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6";
     div.innerHTML="🔔 <b>你不在时到价了</b>："+mine.map(e=>`${e.name}「${e.a} ${e.p}${e.unit==="元/克"?" 元/克":" 元"}」${e.date.slice(5).replace("-","/")} 盘中触及`).join("；")+" <a href=\"#track\" style=\"color:var(--red)\">去价位页看 ›</a>";
-    hero.parentNode.insertBefore(div,hero);
+    host.insertBefore(div,hero||host.firstChild);
   }catch(e){}
 };
 // 🖼 今日转发图：把一页纸画成竖版长图，方便存图转发
@@ -167,7 +168,7 @@ window.refreshWatch=async function(){
   const els=[...document.querySelectorAll(".wl-live[data-code]")];if(!els.length)return;
   const codes=[...new Set(els.map(e=>e.dataset.code))];
   let Q=null;
-  for(let a=0;a<4&&!Q;a++){try{const j=await quoteJSON(codes);Q=j.q||{};}catch(err){if(a<3)await new Promise(rs=>setTimeout(rs,1500*(a+1)));}}
+  for(let a=0;a<4&&!Q;a++){try{const j=await window.quoteJSON(codes);Q=j.q||{};}catch(err){if(a<3)await new Promise(rs=>setTimeout(rs,1500*(a+1)));}}
   if(!Q){els.forEach(e=>e.textContent="现价暂时连不上");return;}
   {
     els.forEach(e=>{
