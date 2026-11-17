@@ -85,18 +85,21 @@
     const cci = C.filter(r => r.q5500).map(r => ({ d: r.d, y: r.q5500, chg: r.c5500, ...(EVB[r.d] || {}) }));
     if (cci.length > 2 && window.lineChart) window.lineChart(coalSec.querySelector("#bd-cci"), cci, { unit: "" });
 
-    // ---- ETF 份额 ----
+    // ---- ETF 份额 ----（2026-11-17 用户决定撤下展示：本节代码与 market.json 数据保留，SHOW_ETF 改回 true 即恢复）
+    const SHOW_ETF = false;
     const G = M.etf_groups || [];
     const etfSec = document.createElement("section"); etfSec.className = "box";
-    etfSec.innerHTML = `<h2>ETF 份额 <small>亿份 · 上交所每日公布 · 份额增加多被看作资金流入</small></h2><div class="empty">读取中…</div>`;
-    wrap.appendChild(etfSec);
+    if (SHOW_ETF) {
+      etfSec.innerHTML = `<h2>ETF 份额 <small>亿份 · 上交所每日公布 · 份额增加多被看作资金流入</small></h2><div class="empty">读取中…</div>`;
+      wrap.appendChild(etfSec);
+    }
     // ---- 期货 ----
     const F = M.futures || [];
     const futSec = document.createElement("section"); futSec.className = "box";
     futSec.innerHTML = `<h2>大宗商品期货 <small>主力合约日收盘</small></h2><div class="empty">读取中…</div>`;
     wrap.appendChild(futSec);
 
-    (async () => {
+    if (SHOW_ETF) (async () => {
       try {
         const codes = G.flatMap(g => g.codes.map(c => c[0])).join(",");
         const [jm, jd] = await Promise.all([fetch(`/api/etf?months=13&s=${codes}`).then(r => r.json()), fetch(`/api/etf?days=4&s=${codes}`).then(r => r.json()).catch(() => ({ rows: [] }))]);
