@@ -284,10 +284,10 @@ function skeletonHTML(){return `<div class="skl" aria-hidden="true"><div class="
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="pos">🎯 实时仓位预测</button><button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
+  el.innerHTML=`<button data-v="pos">🎯 实时仓位预测</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
-function mark(v){const k=v==="home"?"home":(/^\d/.test(v)?"day":v);document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.v===k;b.classList.toggle("on",on);if(on){const row=b.parentElement;if(row)row.scrollTo({left:b.offsetLeft-(row.clientWidth-b.clientWidth)/2,behavior:"smooth"});}});const bn=v==="home"||/^\d/.test(v)?"home":(["charts","track"].includes(v)?v:(["weeks","mind","ps","method","ops","stock","month"].includes(v)?"more":""));document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("on",b.dataset.bn===bn));}
+function mark(v){const k=v==="home"?"home":(/^\d/.test(v)?"day":v);document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.v===k;b.classList.toggle("on",on);if(on){const row=b.parentElement;if(row)row.scrollTo({left:b.offsetLeft-(row.clientWidth-b.clientWidth)/2,behavior:"smooth"});}});const bn=v==="home"||/^\d/.test(v)?"home":(["pos","track"].includes(v)?v:(["weeks","mind","ps","method","ops","stock","month"].includes(v)?"more":""));document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("on",b.dataset.bn===bn));}
 function daybar(v){
   const i=IDX.days.findIndex(d=>d.date===v);
   const opts=IDX.days.map(d=>`<option value="${d.date}"${d.date===v?" selected":""}>${d.date.slice(5).replace("-","月")}日 ${d.weekday||""} · ${d.count}条${d.live?"（今天·实时更新中）":""}</option>`).join("");
@@ -407,14 +407,14 @@ async function go(v){
 <script src="visual.js?v=20261115-9"></script>
 <script src="extra.js?v=20261113-6"></script>
 <script src="levels.js?v=20261115-8"></script>
-<script src="more.js?v=20261115-8"></script>
+<script src="more.js?v=20261117-1"></script>
 <script src="pos.js?v=20261117-5"></script>
 <script>addEventListener("load",()=>{const p=window.__pendingHash;if(p&&location.hash.slice(1)===p){window.__pendingHash=null;if(window.__route)window.__route();}});</script>
 <script>window.__talkP=null;window.openTalk=async function(){try{window.__talkP=window.__talkP||loadScript("talk.js?v=20261113-8");await window.__talkP;if(window.openTalk&&window.openTalk!==arguments.callee)window.openTalk();}catch(e){}};
 // 留言板恢复「一打开就在」：进站约 2.4 秒后自动把留言板装好（桌面右侧面板、手机右下角按钮），不用先点开
 setTimeout(()=>{try{window.__talkP=window.__talkP||loadScript("talk.js?v=20261113-8");}catch(e){}},2400);</script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js",{updateViaCache:"none"}).catch(()=>{}));</script>
-<nav class="bottom-nav" id="bottomNav" aria-label="主导航"><button data-bn="home" type="button">🏠<span>今日</span></button><button data-bn="charts" type="button">📊<span>图表</span></button><button data-bn="track" type="button">📌<span>价位</span></button><button data-bn="search" type="button">🔍<span>搜索</span></button><button data-bn="more" type="button">☰<span>更多</span></button></nav>
+<nav class="bottom-nav" id="bottomNav" aria-label="主导航"><button data-bn="home" type="button">🏠<span>今日</span></button><button data-bn="pos" type="button">🎯<span>仓位</span></button><button data-bn="track" type="button">📌<span>价位</span></button><button data-bn="search" type="button">🔍<span>搜索</span></button><button data-bn="more" type="button">☰<span>更多</span></button></nav>
 <div class="more-sheet" id="moreSheet"><div class="more-card"><div class="more-h"><span>全部栏目</span><button id="moreClose" type="button" aria-label="关闭">✕</button></div><div class="more-grid"><button data-mv="day" type="button">📰 每日微博</button><button data-mv="weeks" type="button">📅 每周要点</button><button data-mv="mind" type="button">🧠 观点导图</button><button data-mv="ps" type="button">🗂 持仓PS图</button><button data-mv="method" type="button">📚 方法论</button><button data-mv="ops" type="button">📝 操作日志</button><button data-mv="stock" type="button">🔎 按股票看</button><button data-mv="month" type="button">🗓 月度总结</button><button data-mv="gloss" type="button">📖 术语表</button><button data-mv="news" type="button">🆕 更新说明</button><button data-mv="talk" type="button">💬 留言板</button><button data-mv="app" type="button">📲 放到桌面</button></div></div></div>
 <button id="toTop" type="button" aria-label="回到顶部">↑</button>
 <script>(function(){const b=document.getElementById("toTop");addEventListener("scroll",()=>{b.style.display=scrollY>600?"block":"none";},{passive:true});b.onclick=()=>scrollTo({top:0,behavior:"smooth"});})();</script>

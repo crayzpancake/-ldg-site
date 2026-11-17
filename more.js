@@ -183,7 +183,7 @@
     d.innerHTML = `<div class="gt">👋 第一次来？30 秒看懂</div><ol>
       <li>这里按日期整理 <a href="https://weibo.com/u/3962719063" target="_blank" rel="noopener">@挖地瓜的超级鹿鼎公</a> 公开的<b>投资相关微博</b>，<b style="color:var(--red,#d00)">红字</b>是重点，「问」是网友、「答」是他。</li>
       <li>想知道他买什么：<a data-g="track">📌 价位/仓位追踪</a> · <a data-g="ops">📝 操作日志</a></li>
-      <li>只想快速看：<a data-g="charts">⚡ 30秒速览</a> · <a data-g="weeks">📅 每周要点</a> · <a data-g="month">🗓 月度总结</a></li>
+      <li>只想快速看：<a data-g="weeks">📅 每周要点</a> · <a data-g="month">🗓 月度总结</a></li>
       <li>找某只股票：<a data-g="stock">🔎 按股票看</a>；外号看不懂点虚线词或 <a data-g="gloss">📖 术语表</a></li>
       <li>每晚 11 点左右更新 · <a data-g="app">📲 放到桌面</a> · <a data-g="talk">💬 留言板</a> · 不构成投资建议</li></ol>`;
     d.addEventListener("click", e => {
