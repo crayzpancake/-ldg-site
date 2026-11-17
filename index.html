@@ -284,7 +284,7 @@ function skeletonHTML(){return `<div class="skl" aria-hidden="true"><div class="
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
+  el.innerHTML=`<button data-v="pos">🎯 本月仓位</button><button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
 function mark(v){const k=v==="home"?"home":(/^\d/.test(v)?"day":v);document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.v===k;b.classList.toggle("on",on);if(on){const row=b.parentElement;if(row)row.scrollTo({left:b.offsetLeft-(row.clientWidth-b.clientWidth)/2,behavior:"smooth"});}});const bn=v==="home"||/^\d/.test(v)?"home":(["charts","track"].includes(v)?v:(["weeks","mind","ps","method","ops","stock","month"].includes(v)?"more":""));document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("on",b.dataset.bn===bn));}
@@ -352,6 +352,7 @@ async function go(v){
   cur=v; mark(v); if(window.hit)window.hit(/^\d/.test(v)?"day":v);
   const m=document.getElementById("main"); m.classList.remove("key-only");
   if(v==="home"){ try{ if(location.hash!=="#home") history.replaceState(null,"","#home"); }catch(e){} const d=IDX.days[0]; if(!d){m.innerHTML=`<div class="empty">暂无数据</div>`;return;} return go(d.date); }
+  if(v==="pos"){try{ if(location.hash!=="#pos") history.replaceState(null,"","#pos"); }catch(e){} if(window.renderPos)window.renderPos(m);return;}
   const h=v==="home"?"home":(["track","weeks","charts","mind","ps","method","ops","month"].includes(v)?v:"d"+v.replace(/-/g,""));
   if(v!=="stock"){try{ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }catch(e){}}
   if(v==="ops"){await loadTrack();window.renderOps(m,IDX);return;}
@@ -378,6 +379,7 @@ async function go(v){
     if(T&&T.date&&T.posts&&T.posts.length&&(!IDX.days[0]||T.date>IDX.days[0].date)){T.live=true;cache[T.date]=T;IDX.days.unshift({date:T.date,weekday:T.weekday||"",count:T.posts.length,inv:T.posts.length,live:true});}}catch(e){}
   window.__IDX=IDX;window.__cache=cache;window.__getJSON=getJSON;
   tabs();
+  if(window.renderPosBar)window.renderPosBar();
   window.__go=go;
   window.__route=routeFromHash;
   if(window.renderUpdated)window.renderUpdated(IDX);
@@ -388,7 +390,7 @@ async function go(v){
     const h=location.hash.slice(1);
     let start="home";
     if((h==="news"&&!window.renderNews)||(h==="gloss"&&!window.renderGloss)||(h==="app"&&!window.renderApp)||(/^s=/.test(h)&&!window.doSearch))window.__pendingHash=h;
-    if(["home","track","weeks","charts","mind","ps","method","ops","month","stock"].includes(h))start=h;
+    if(["home","pos","track","weeks","charts","mind","ps","method","ops","month","stock"].includes(h))start=h;
     if(/^stock=/.test(h)){window.__stockStart=decodeURIComponent(h.slice(6));start="stock";}
     if(h==="news"&&window.renderNews){window.renderNews();return;}
     if(h==="gloss"&&window.renderGloss){window.renderGloss();return;}
@@ -406,6 +408,7 @@ async function go(v){
 <script src="extra.js?v=20261113-6"></script>
 <script src="levels.js?v=20261115-8"></script>
 <script src="more.js?v=20261115-8"></script>
+<script src="pos.js?v=20261117-1"></script>
 <script>addEventListener("load",()=>{const p=window.__pendingHash;if(p&&location.hash.slice(1)===p){window.__pendingHash=null;if(window.__route)window.__route();}});</script>
 <script>window.__talkP=null;window.openTalk=async function(){try{window.__talkP=window.__talkP||loadScript("talk.js?v=20261113-8");await window.__talkP;if(window.openTalk&&window.openTalk!==arguments.callee)window.openTalk();}catch(e){}};
 // 留言板恢复「一打开就在」：进站约 2.4 秒后自动把留言板装好（桌面右侧面板、手机右下角按钮），不用先点开
