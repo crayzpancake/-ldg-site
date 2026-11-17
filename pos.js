@@ -25,6 +25,7 @@
 .pos-cash b{font-size:22px;color:var(--red,#d00)}
 .pos-leg{font-size:12.5px;color:var(--mute);margin:6px 0}
 .mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
+.pos-cat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}.pos-cat div{background:var(--chip,#f3f0ea);border-radius:10px;padding:6px 8px;font-size:12.5px}.pos-cat b{display:block;font-size:18px}.pos-cat i{font-style:normal;font-size:12px}.pos-cat i.u{color:#d00}.pos-cat i.d{color:#1a7a3a}
 .pos-warn{background:#fff6e5;border:1px solid #f3d9a4;border-radius:10px;padding:8px 10px;font-size:13px;margin:6px 0}
 @media (prefers-color-scheme:dark){.mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
 .pos-warn{background:#3a2f1a;border-color:#5a4520}}`;
@@ -54,7 +55,7 @@
         ${it.ev.map(e => { const k = TAG[e.a] || TAG.note; return `<div class="pos-ev"><span class="d">${md(e.d)}</span><span style="color:${k[2]}">${k[0]}</span> “${esc(e.x)}” <a href="${wl(e.b)}" target="_blank" rel="noopener">原文</a></div>`; }).join("")}</td></tr>`;
     }).join("");
     m.innerHTML = `<section class="box"><h2>🎯 实时仓位预测 <small>更新到 ${md(p.asof)} · 每晚随微博一起更新</small></h2>
-      <div class="pos-warn">⚠️ 9月以后他不再晒真实持仓截图，这里是<b>根据他公开说过的话推测</b>的，不是真实持仓；他没明说的买卖不会出现在这里。仅供了解，<b>不构成投资建议</b>，请勿据此照抄。</div>
+      <div class="pos-warn">⚠️ 9月以后他不再晒真实持仓截图，这里是<b>根据他公开说过的话推测</b>的，不是真实持仓；他没明说的买卖不会出现在这里。仅供了解，<b>不构成投资建议</b>，请勿据此照抄。${p.self ? `<br>他本人对网友推算持仓的评价：“${esc(p.self.x.replace(/^（[^）]*）/, ""))}”（${md(p.self.d)} <a href="${wl(p.self.b)}" target="_blank" rel="noopener">原文</a>）——所以这里只当参考。` : ""}</div>
       ${p.mock ? `<div id="pos-mock"><div class="empty">正在拉实时行情…</div></div>` : ""}
       <h3 style="margin:14px 0 4px;font-size:15px">📌 本月每一笔变动（他的原话）</h3>
       ${p.cash ? `<div class="pos-cash"><div>💰 游戏仓仙晶（现金）<br><b>${p.cash.v}万</b> <a href="${wl(p.cash.b)}" target="_blank" rel="noopener">原文</a><br><small style="color:var(--mute)">${md(p.cash.d)} 他本人公布 · ${esc(p.cash.prevNote || "")}</small></div></div>` : ""}
@@ -88,6 +89,10 @@
       .map(r => `<tr class="${cls(r)}${r.m ? " mk-chg" : ""}">${mm(r)}<td>${r.code}</td><td>${r.name}</td><td>${r.s}</td><td>${f(r.cost)}</td><td>${f(r.p)}</td><td>${f(r.mv)}</td><td>${f(r.pl)}</td><td>${pc(r.pct)}</td><td>${r.q.startsWith("sh") ? "上海A股" : "深圳A股"}</td></tr>`).join("")
       + (k.gone || []).map(g => `<tr class="mk-gone"><td class="mm">${MK[g.m] || ""}</td><td>——</td><td>${g.name}</td><td colspan="7" style="text-align:left">${esc(g.w)}</td></tr>`).join("");
     const rowsH = H.map(r => `<tr class="${cls(r)}${r.m ? " mk-chg" : ""}">${mm(r)}<td>${r.name}</td><td>${r.code}</td><td>${r.s}</td><td>${f(r.cost)}</td><td>${f(r.mv)}</td><td>${f(r.pl)}</td><td>${pc(r.pct)}</td></tr>`).join("");
+    const CAT = { "神火股份": "电解铝", "云铝股份": "电解铝", "中孚实业": "电解铝", "长江电力": "水电", "陕西能源": "火电", "华能国际电力股份": "火电", "潞安环能": "煤炭", "陕西煤业": "煤炭", "山煤国际": "煤炭", "中煤能源": "煤炭", "紫金矿业": "其他", "宝丰能源": "其他", "新城发展": "其他", "中国海洋石油": "其他" };
+    const OCT = { "电解铝": 33.2, "煤炭": 14.2, "火电": 12.3, "水电": 14.2, "其他": 10.5, "现金(仙晶)": 15.6 };
+    const cs = {}; [...A, ...H].forEach(r => { const c = CAT[r.name] || "其他"; cs[c] = (cs[c] || 0) + r.mv; }); cs["现金(仙晶)"] = k.xj * 1e4;
+    const catHTML = Object.keys(OCT).map(c => { const v = (cs[c] || 0) / total * 100, d = v - OCT[c]; return `<div><span>${c}</span><b>${v.toFixed(1)}%</b><i class="${d >= 0 ? "u" : "d"}">${d >= 0 ? "▲" : "▼"}${Math.abs(d).toFixed(1)}</i></div>`; }).join("");
     const chg = [...k.a, ...k.hk].filter(r => r.m).map(r => `${MK[r.m]} ${r.name}：${r.w}`);
     host.innerHTML = `<div class="mk-wrap"><div class="mk-cap">↓ 按交易软件截图样式还原的<b>实时预测持仓</b>（${live ? "实时行情 " + esc(t) : "行情获取失败，暂用10/30收盘价"}）· 黄底=本月有变动 · 点表格放大</div>
       <div class="mk-scroll"><div class="mk">
@@ -101,7 +106,8 @@
        <table class="mk-t"><tr><th>本月</th><th>证券名称</th><th>证券代码</th><th>可用股份</th><th>参考成本价(港币)</th><th>最新市值(人民币)</th><th>参考盈亏(人民币)</th><th>盈亏比例(%)</th></tr>${rowsH}</table>
        <div class="mk-wm">${Array.from({ length: 60 }, () => "<span>非真实截图</span>").join("")}</div>
       </div></div>
-      <div class="cap">本月变动：${chg.map(esc).join("；")}${k.undisclosed ? `。另有约${k.undisclosed}万他买了但没说买了什么（卖长电回笼的钱比仙晶增加的多），表里没列。` : "。"}其余股数沿用10月底推测；港股按1港币≈${k.rate}人民币换算。</div></div>`;
+      <div class="pos-cat">${catHTML}</div><div class="cap" style="margin:-2px 0 6px">↑ 按上表推算的各类仓位占比，箭头＝比他10/30公布的变化（现金按他公布的仙晶）</div>
+      <div class="cap">本月变动：${chg.map(esc).join("；")}${k.undisclosed ? `。另有约${k.undisclosed}万去向他没说（卖长电回笼的钱比仙晶增加的多，可能买了别的，也可能提现），表里没列，如果是买了股票，上面某一类的占比会偏低。` : "。"}其余股数沿用10月底推测；港股按1港币≈${k.rate}人民币换算。</div></div>`;
     const fit = () => host.querySelectorAll(".mk-scroll").forEach(w => { if (w.classList.contains("big")) return; const mk = w.firstElementChild; const z = Math.min(1, w.clientWidth / 840); mk.style.transform = `scale(${z})`; w.style.height = (mk.offsetHeight * z) + "px"; });
     fit(); addEventListener("resize", fit);
     host.querySelectorAll(".mk-scroll").forEach(w => w.onclick = () => { w.classList.toggle("big"); if (!w.classList.contains("big")) fit(); });
