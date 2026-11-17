@@ -26,6 +26,7 @@
 .pos-leg{font-size:12.5px;color:var(--mute);margin:6px 0}
 .mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
 .pos-cat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}.pos-cat div{background:var(--chip,#f3f0ea);border-radius:10px;padding:6px 8px;font-size:12.5px}.pos-cat b{display:block;font-size:18px}.pos-cat i{font-style:normal;font-size:12px}.pos-cat i.u{color:#d00}.pos-cat i.d{color:#1a7a3a}
+.pos-guess{margin:10px 0 4px;padding:8px 10px;border-radius:10px;border:1.5px dashed #2f6fd6;font-size:13.5px;line-height:1.6}.pos-guess b{color:#2f6fd6}.pos-guess div{font-size:12.5px;color:var(--mute);margin-top:2px}
 .pos-warn{background:#fff6e5;border:1px solid #f3d9a4;border-radius:10px;padding:8px 10px;font-size:13px;margin:6px 0}
 @media (prefers-color-scheme:dark){.mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
 .pos-warn{background:#3a2f1a;border-color:#5a4520}}`;
@@ -106,8 +107,8 @@
        <table class="mk-t"><tr><th>本月</th><th>证券名称</th><th>证券代码</th><th>可用股份</th><th>参考成本价(港币)</th><th>最新市值(人民币)</th><th>参考盈亏(人民币)</th><th>盈亏比例(%)</th></tr>${rowsH}</table>
        <div class="mk-wm">${Array.from({ length: 60 }, () => "<span>非真实截图</span>").join("")}</div>
       </div></div>
-      <div class="pos-cat">${catHTML}</div><div class="cap" style="margin:-2px 0 6px">↑ 按上表推算的各类仓位占比，箭头＝比他10/30公布的变化（现金按他公布的仙晶）</div>
-      <div class="cap">本月变动：${chg.map(esc).join("；")}${k.undisclosed ? `。另有约${k.undisclosed}万去向他没说（卖长电回笼的钱比仙晶增加的多，可能买了别的，也可能提现），表里没列，如果是买了股票，上面某一类的占比会偏低。` : "。"}其余股数沿用10月底推测；港股按1港币≈${k.rate}人民币换算。</div></div>`;
+      ${k.guess ? `<div class="pos-guess">🔍 <b>${esc(k.guess.t)}</b><div>${esc(k.guess.why)}</div></div>` : ""}<div class="pos-cat">${catHTML}</div><div class="cap" style="margin:-2px 0 6px">↑ 按上表推算的各类仓位占比，箭头＝比他10/30公布的变化（现金按他公布的仙晶）</div>
+      <div class="cap">本月变动：${chg.map(esc).join("；")}。其余股数沿用10月底推测；港股按1港币≈${k.rate}人民币换算。</div></div>`;
     const fit = () => host.querySelectorAll(".mk-scroll").forEach(w => { if (w.classList.contains("big")) return; const mk = w.firstElementChild; const z = Math.min(1, w.clientWidth / 840); mk.style.transform = `scale(${z})`; w.style.height = (mk.offsetHeight * z) + "px"; });
     fit(); addEventListener("resize", fit);
     host.querySelectorAll(".mk-scroll").forEach(w => w.onclick = () => { w.classList.toggle("big"); if (!w.classList.contains("big")) fit(); });
