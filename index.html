@@ -284,7 +284,7 @@ function skeletonHTML(){return `<div class="skl" aria-hidden="true"><div class="
 
 function tabs(){
   const el=document.getElementById("tabs");
-  el.innerHTML=`<button data-v="pos">🎯 本月仓位</button><button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
+  el.innerHTML=`<button data-v="pos">🎯 实时仓位预测</button><button data-v="charts">📊 图表</button><button data-v="day">📰 每日微博</button><button data-v="weeks">📅 每周要点</button><button data-v="mind">🧠 观点导图</button><button data-v="ps">🗂 持仓PS图</button><button data-v="method">📚 方法论</button><button data-v="track">📌 价位/仓位追踪</button><button data-v="ops">📝 操作日志</button><button data-v="stock">🔎 按股票看</button><button data-v="month">🗓 月度总结</button>`;
   el.onclick=e=>{const v=e.target.closest("button")?.dataset.v;if(!v)return; if(v==="day")go(cur&&/^\d/.test(cur)?cur:IDX.days[0].date); else go(v);};
 }
 function mark(v){const k=v==="home"?"home":(/^\d/.test(v)?"day":v);document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.v===k;b.classList.toggle("on",on);if(on){const row=b.parentElement;if(row)row.scrollTo({left:b.offsetLeft-(row.clientWidth-b.clientWidth)/2,behavior:"smooth"});}});const bn=v==="home"||/^\d/.test(v)?"home":(["charts","track"].includes(v)?v:(["weeks","mind","ps","method","ops","stock","month"].includes(v)?"more":""));document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("on",b.dataset.bn===bn));}
@@ -408,7 +408,7 @@ async function go(v){
 <script src="extra.js?v=20261113-6"></script>
 <script src="levels.js?v=20261115-8"></script>
 <script src="more.js?v=20261115-8"></script>
-<script src="pos.js?v=20261117-1"></script>
+<script src="pos.js?v=20261117-2"></script>
 <script>addEventListener("load",()=>{const p=window.__pendingHash;if(p&&location.hash.slice(1)===p){window.__pendingHash=null;if(window.__route)window.__route();}});</script>
 <script>window.__talkP=null;window.openTalk=async function(){try{window.__talkP=window.__talkP||loadScript("talk.js?v=20261113-8");await window.__talkP;if(window.openTalk&&window.openTalk!==arguments.callee)window.openTalk();}catch(e){}};
 // 留言板恢复「一打开就在」：进站约 2.4 秒后自动把留言板装好（桌面右侧面板、手机右下角按钮），不用先点开
