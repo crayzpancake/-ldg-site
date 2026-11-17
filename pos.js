@@ -86,7 +86,7 @@
     const mm = r => r.m ? `<td class="mm" title="${esc(r.w || "")}">${MK[r.m] || ""}</td>` : `<td class="mm" style="color:#bbb">—</td>`;
     const pc = v => v == null ? "—" : v.toFixed(2);
     const rowsA = [{ code: k.yh.code, name: k.yh.name, s: k.yh.s, cost: k.yh.cost, p: yp, mv: ymv, pl: ymv - k.yh.s * k.yh.cost, pct: (yp / k.yh.cost - 1) * 100, q: k.yh.q }, ...A].sort((a, b) => b.mv - a.mv)
-      .map(r => `<tr class="${cls(r)}${r.m ? " mk-chg" : ""}">${mm(r)}<td>${r.code}</td><td>${r.name}</td><td>${r.s}</td><td>${f(r.cost)}</td><td>${f(r.p)}</td><td>${f(r.mv)}</td><td>${f(r.pl)}</td><td>${pc(r.pct)}</td><td>${r.q.startsWith("sh") ? "上海A股" : "深圳A股"}</td></tr>`).join("")
+      .map(r => `<tr class="${cls(r)}${r.m ? " mk-chg" : ""}">${mm(r)}<td>${r.code}</td><td>${r.name}</td><td>${r.s}</td><td>${r.costText||f(r.cost)}</td><td>${f(r.p)}</td><td>${f(r.mv)}</td><td>${r.plText||f(r.pl)}</td><td>${r.plText?'—':pc(r.pct)}</td><td>${r.q.startsWith("sh") ? "上海A股" : "深圳A股"}</td></tr>`).join("")
       + (k.gone || []).map(g => `<tr class="mk-gone"><td class="mm">${MK[g.m] || ""}</td><td>——</td><td>${g.name}</td><td colspan="7" style="text-align:left">${esc(g.w)}</td></tr>`).join("");
     const rowsH = H.map(r => `<tr class="${cls(r)}${r.m ? " mk-chg" : ""}">${mm(r)}<td>${r.name}</td><td>${r.code}</td><td>${r.s}</td><td>${f(r.cost)}</td><td>${f(r.mv)}</td><td>${f(r.pl)}</td><td>${pc(r.pct)}</td></tr>`).join("");
     const CAT = { "神火股份": "电解铝", "云铝股份": "电解铝", "中孚实业": "电解铝", "长江电力": "水电", "陕西能源": "火电", "华能国际电力股份": "火电", "潞安环能": "煤炭", "陕西煤业": "煤炭", "山煤国际": "煤炭", "中煤能源": "煤炭", "紫金矿业": "其他", "宝丰能源": "其他", "新城发展": "其他", "中国海洋石油": "其他" };
