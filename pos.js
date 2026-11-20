@@ -27,6 +27,7 @@
 .mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
 .pos-cat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}.pos-cat div{background:var(--chip,#f3f0ea);border-radius:10px;padding:6px 8px;font-size:12.5px}.pos-cat b{display:block;font-size:18px}.pos-cat i{font-style:normal;font-size:12px}.pos-cat i.u{color:#d00}.pos-cat i.d{color:#1a7a3a}
 .pos-guess{margin:10px 0 4px;padding:8px 10px;border-radius:10px;border:1.5px dashed #2f6fd6;font-size:13.5px;line-height:1.6}.pos-guess b{color:#2f6fd6}.pos-guess div{font-size:12.5px;color:var(--mute);margin-top:2px}
+.pos-lk{border:1px solid var(--line,#ddd);background:var(--chip,#f3f0ea);color:var(--ink,#222);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer}
 .pos-warn{background:#fff6e5;border:1px solid #f3d9a4;border-radius:10px;padding:8px 10px;font-size:13px;margin:6px 0}
 @media (prefers-color-scheme:dark){.mk-t td.mm{text-align:center;font-weight:700}.mk-t tr.mk-chg td{background:#fffbe6}.mk-t tr.mk-gone td{color:#999!important;text-decoration:line-through}.mk-t tr.mk-gone td.mm{text-decoration:none}
 .pos-warn{background:#3a2f1a;border-color:#5a4520}}`;
@@ -64,7 +65,9 @@
       <div class="pos-leg">图例：🟢▲加仓　🔴▼减仓　🔄波段（减了又买回）　🆕新建仓　❌清仓</div>
       <table class="pos-t">${rows}</table>
       ${p.hold && p.hold.length ? `<h3 style="margin:14px 0 4px;font-size:15px">⏸ 本月没说过买卖的（按10月底推测持有）</h3><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px">${p.hold.map(n => `<span class="pchip" style="color:var(--mute)">${esc(n)}</span>`).join("")}</div><div class="cap" style="margin-top:6px">${esc(p.holdNote || "")}</div>` : ""}
-      <div class="cap" style="margin-top:10px">起点：${esc(p.base)}。每月1号会出一张完整的月底持仓推测图，作为下个月的新起点。</div></section>`;
+      <div class="cap" style="margin-top:10px">起点：${esc(p.base)}。每月1号会出一张完整的月底持仓推测图，作为下个月的新起点。</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="pos-lk" data-v="ops">📝 操作日志（他说过的每笔买卖）</button><button type="button" class="pos-lk" data-v="ps">🗂 历史持仓PS图</button></div></section>`;
+    m.querySelectorAll(".pos-lk").forEach(b => b.onclick = () => { window.__go && window.__go(b.dataset.v); scrollTo({ top: 0 }); });
     if (p.mock) mock(m.querySelector("#pos-mock"), p);
   };
 
