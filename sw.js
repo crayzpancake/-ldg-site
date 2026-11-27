@@ -1,6 +1,6 @@
 // 网络优先：始终取最新内容；断网时才用缓存
 // 2026-11-17 晨：再次触发部署，测试 Netlify 额度恢复情况（11-15、11-16 内容均已推 GitHub 待上线）
-const C = "ldg-v13";
+const C = "ldg-v14";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", e => {

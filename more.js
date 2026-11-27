@@ -92,12 +92,16 @@
   async function stkPanel(box, code, name, dates, lv, unit) {
     if (!box) return;
     let px = null;
-    try { const r = await fetch("/api/quote?s=" + code, { cache: "no-store" }); const j = await r.json(); const q = (j.q || {})[code]; if (q && q.px > 0) px = q; } catch (e) {}
-    const pxEl = box.querySelector(".stk-px");
-    if (pxEl) pxEl.innerHTML = px ? `<b style="font-size:20px">${px.px.toFixed(2)}</b> <span style="color:${px.chg >= 0 ? "#d00" : "#1a9a4a"};font-weight:600">${px.chg >= 0 ? "+" : ""}${(+px.chg).toFixed(2)}%</span>${px.t ? ` <small style="color:var(--mute)">${esc(px.t)}</small>` : ""}` : "现价暂时连不上";
-    if (px && lv && lv.lv && lv.lv.length) {
-      const rows = box.querySelector(".stk-lvrows"); if (rows) rows.innerHTML = lv.lv.map(x => { const d = (x.p / px.px - 1) * 100; const hit = x.k === "buy" ? px.px <= x.p : px.px >= x.p; return `<div style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><span style="font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;background:${x.k === "buy" ? "#1a9a4a" : "#d00"}">${esc(x.a)}</span><span>${esc(x.txt || x.p)}${esc(unit || "元")}</span><span style="margin-left:auto;font-weight:700">${hit ? "现价已到位" : "离现价 " + Math.abs(d).toFixed(1) + "%"}</span></div>`; }).join("");
-    }
+    const paintPx = q => {
+      const pxEl = box.querySelector(".stk-px");
+      if (pxEl) pxEl.innerHTML = `<b style="font-size:20px">${q.px.toFixed(2)}</b> <span style="color:${q.chg >= 0 ? "#d00" : "#1a9a4a"};font-weight:600">${q.chg >= 0 ? "+" : ""}${(+q.chg).toFixed(2)}%</span>${q.t ? ` <small style="color:var(--mute)">${esc(q.t)}</small>` : ""}`;
+      if (lv && lv.lv && lv.lv.length) {
+        const rows = box.querySelector(".stk-lvrows"); if (rows) rows.innerHTML = lv.lv.map(x => { const d = (x.p / q.px - 1) * 100; const hit = x.k === "buy" ? q.px <= x.p : q.px >= x.p; return `<div style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><span style="font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;background:${x.k === "buy" ? "#1a9a4a" : "#d00"}">${esc(x.a)}</span><span>${esc(x.txt || x.p)}${esc(unit || "元")}</span><span style="margin-left:auto;font-weight:700">${hit ? "现价已到位" : "离现价 " + Math.abs(d).toFixed(1) + "%"}</span></div>`; }).join("");
+      }
+    };
+    try { const c = JSON.parse(localStorage.getItem("ldg_qcache") || "{}"); if (c[code] && c[code].px > 0) { px = c[code]; paintPx(px); } } catch (e) {}
+    try { const r = await fetch("/api/quote?s=" + code, { cache: "no-store" }); const j = await r.json(); const q = (j.q || {})[code]; if (q && q.px > 0) { px = q; try { const c = JSON.parse(localStorage.getItem("ldg_qcache") || "{}"); c[code] = q; localStorage.setItem("ldg_qcache", JSON.stringify(c)); } catch (e) {} paintPx(px); } } catch (e) {}
+    if (!px) { const pxEl = box.querySelector(".stk-px"); if (pxEl) pxEl.textContent = "现价暂时连不上"; }
     let rows = [];
     try { const r = await fetch("/api/kline?s=" + code + "&n=250"); const j = await r.json(); rows = (j.k || {})[code] || []; } catch (e) {}
     const cv = box.querySelector("#stk-k"); if (!cv || rows.length < 10) { const w = box.querySelector(".stk-kw"); if (w) w.style.display = "none"; return; }

@@ -4,6 +4,10 @@
   const rich = s => esc(s).replace(/&lt;(\/?)b&gt;/g, "<$1b>");
   const link = b => `https://weibo.com/3962719063/${b}`;
   let timer = null, Q = {}, at = 0, fail = false;
+  const QC_KEY = "ldg_qcache";
+  const qCacheRead = () => { try { return JSON.parse(localStorage.getItem(QC_KEY) || "{}"); } catch (e) { return {}; } };
+  const qCacheWrite = q => { try { const c = qCacheRead(); Object.assign(c, q || {}); localStorage.setItem(QC_KEY, JSON.stringify(c)); } catch (e) {} };
+  Q = qCacheRead();
   let HITREC = null, hitPromise = null;
   // 到价记录：用日K的最高/最低判断盘中是否触及他给过的价位（自他说出那天之后算）
   window.LDGhits = function (IDX) {
@@ -91,6 +95,16 @@
 .lv-rec .tag{font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff}.lv-rec .tag.buy{background:#1a9a4a}.lv-rec .tag.sell{background:#d00}
 .lv-rec-x{color:var(--mute);font-size:12.5px}
 .lv-hits{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:var(--soft);border:1px solid var(--red);font-size:13.5px;line-height:1.6}.lv-hits b{color:var(--red)}
+.lv-rank{margin:0 0 10px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--card)}
+.lv-rank-h{font-weight:700;font-size:14px;margin-bottom:5px}.lv-rank-h small{font-weight:400;color:var(--mute);font-size:12px}
+.lv-rank-r{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 6px;flex-wrap:wrap;border-radius:6px}
+.lv-rank-r.hot{background:var(--soft)}
+.lv-rank-r.hot .lv-rank-d{color:var(--red);font-weight:700}
+.lv-rank-n{color:var(--mute);font-variant-numeric:tabular-nums;width:14px}
+.lv-rank-r .tag{font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;color:#fff;white-space:nowrap}
+.lv-rank-r .tag.buy{background:#1a9a4a}.lv-rank-r .tag.sell{background:#d00}
+.lv-rank-d{font-variant-numeric:tabular-nums}
+.lv-rank-p{margin-left:auto;color:var(--mute);font-size:12.5px;font-variant-numeric:tabular-nums}
 @media (min-width:700px){.lv-grid{grid-template-columns:1fr 1fr}}
 `;
   function addCss() {
@@ -138,11 +152,15 @@
     L.forEach(x => (x.lv || []).forEach(v => { const q = Q[x.code]; if (q && q.px > 0 && (v.k === "buy" ? q.px <= v.p : q.px >= v.p)) hitList.push({ name: x.name, a: v.a, p: v.p, unit: x.unit, px: q.px, k: v.k }); }));
     const hits = hitList.length;
     const hitBar = hits ? `<div class="lv-hits">🔔 <b>已到他提过的价位（${hits} 个）</b>：${hitList.map(h => `${esc(h.name)}「${esc(h.a)} ${h.p}${h.unit === "元/克" ? " 元/克" : " 元"}」，现价 ${f2(h.px, h.unit)} 已${h.k === "buy" ? "在其下" : "在其上"}`).join("；")}</div>` : "";
+    const rk = [];
+    L.forEach(x => { const q = Q[x.code]; if (!q || !(q.px > 0)) return; (x.lv || []).forEach(v => { const dist = v.k === "buy" ? (q.px - v.p) / v.p * 100 : (v.p - q.px) / v.p * 100; rk.push({ name: x.name, a: v.a, p: v.p, unit: x.unit, k: v.k, px: q.px, dist }); }); });
+    rk.sort((a, b) => a.dist - b.dist);
+    const rankBar = rk.length ? `<div class="lv-rank"><div class="lv-rank-h">🏁 离他的价位最近的 <small>按现价还要走多远排序；红底 = 只差 3% 以内，贴线了</small></div>${rk.slice(0, 8).map((r, i) => `<div class="lv-rank-r${r.dist <= 3 ? " hot" : ""}"><span class="lv-rank-n">${i + 1}</span><b>${esc(r.name)}</b><span class="tag ${r.k}">${esc(r.a)} ${r.p}${r.unit === "元/克" ? " 元/克" : " 元"}</span><span class="lv-rank-d">${r.dist <= 0 ? "已到价" : (r.k === "buy" ? `还要跌 ${r.dist.toFixed(1)}%` : `还要涨 ${r.dist.toFixed(1)}%`)}</span><span class="lv-rank-p">现价 ${f2(r.px, r.unit)}</span></div>`).join("")}</div>` : "";
     const t = at ? new Date(at) : null;
     const tfmt = t ? (() => { const c = new Date(at + 8 * 3600e3); return `${String(c.getUTCHours()).padStart(2, "0")}:${String(c.getUTCMinutes()).padStart(2, "0")}:${String(c.getUTCSeconds()).padStart(2, "0")}`; })() : "";
-    const status = fail ? (at ? `刷新失败 · 显示 ${tfmt} 的价格` : "行情暂时连不上") : (t ? `${mktStatus()} · ${tfmt} 刷新` : "读取行情…");
+    const status = fail ? (at ? `刷新失败 · 显示 ${tfmt} 的价格` : "行情暂时连不上") : (t ? `${mktStatus()} · ${tfmt} 刷新` : (Object.keys(Q).length ? "先显示上次的价格 · 刷新中…" : "读取行情…"));
     el.innerHTML = `<section class="box lv-box"><h2>📌 他提过的价位 · 现价离多远 <small><span class="lv-live${fail ? " off" : ""}"></span>${status}</small></h2>
-      ${hitBar}${typeof HITREC !== "undefined" && HITREC ? recordsHTML() : ""}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
+      ${hitBar}${rankBar}${typeof HITREC !== "undefined" && HITREC ? recordsHTML() : ""}<div class="lv-grid">${L.map(cardHTML).join("")}</div>
       <div class="lv-note">绿色 = 他提过的买入/加仓相关价位，红色 = 他提过的目标价；百分比是现价离该价位的距离，条越满离得越近。这些是他在不同时间、不同前提下随口提到的参考位，不是操作信号，他也可能随时改变想法。股价每 15 秒刷新（A股交易时段实时，收盘后为收盘价）；黄金用上期所黄金主力合约近似人民币金价。只整理公开发言，不构成投资建议，请勿据此去打扰博主本人。</div>
     </section>`;
   }
@@ -158,7 +176,7 @@
         j = await r.json();
       } catch (e) { if (!att) await new Promise(rs => setTimeout(rs, 1200)); }
     }
-    if (j) { Object.assign(Q, j.q || {}); at = Date.now(); fail = !Object.keys(j.q || {}).length; } else fail = true;
+    if (j) { Object.assign(Q, j.q || {}); qCacheWrite(j.q); at = Date.now(); fail = !Object.keys(j.q || {}).length; } else fail = true;
     paint(el, IDX);
   }
 

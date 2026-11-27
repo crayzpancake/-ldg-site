@@ -60,7 +60,7 @@
       rc.querySelectorAll("button").forEach(b => b.onclick = () => window.doSearch(b.textContent)); };
     window.__srRecent();
   }
-  const SYN = { "正宫": "神华", "西宫": "中煤", "旧爱": "陕煤", "西安电厂": "陕西能源", "绿铝": "云铝", "门窗": "神火", "易拉罐": "中孚", "喷吹": "潞安", "仙晶": "现金", "类现金": "长江电力", "大水电": "长江电力", "海狗": "中远海控", "猛男": "内蒙华电" };
+  const SYN = { "正宫": "神华", "西宫": "中煤", "旧爱": "陕煤", "西安电厂": "陕西能源", "绿铝": "云铝", "门窗": "神火", "鬼火": "神火", "易拉罐": "中孚", "喷吹": "潞安", "仙晶": "现金", "火鸡": "货币基金", "货鸡": "货币基金", "类现金": "长江电力", "大水电": "长江电力", "海狗": "中远海控", "猛男": "内蒙华电" };
   const variants = w => { const vs = new Set([w]); if (SYN[w]) vs.add(SYN[w].toLowerCase());
     Object.entries(SYN).forEach(([k, v]) => { if (v.toLowerCase() === w) vs.add(k.toLowerCase()); }); return [...vs]; };
   window.doSearch = async function (q) {
@@ -157,6 +157,12 @@
     "大水电": "股票外号：长江电力。",
     "海狗": "股票外号：中远海控。",
     "猛男": "股票外号：内蒙华电。",
+    "鬼火": "股票外号：神火股份（他帖子里常这么戏称）。",
+    "火鸡": "货币基金的戏称（他有时也写作「货鸡」）。",
+    "货鸡": "同「火鸡」，货币基金的戏称。",
+    "牙医": "一位常和他对照仓位、互相调侃的网友，不是股票。",
+    "统子哥": "他常看的一位博主（红果统子哥），帖子里常向他请教或对照观点。",
+    "正规仓": "他另一个比游戏仓更大的主要账户，不公开具体持仓。",
     "游戏仓": "他公开晒持仓、每月做总结的那个账户（也是本站「持仓PS图」统计的账户）。",
     "主仓": "他的另一个主要账户，不公开具体持仓。",
     "某队": "网友对护盘资金（俗称“国家队”）的含蓄说法。",
@@ -313,9 +319,9 @@
     draw();
   };
 
-  // ⚡ 30秒速览（图表页最上面）
+  // ⚡ 30秒速览（每日页顶部 / 图表页）
   window.renderQuick = async function (main, IDX) {
-    const root = main.querySelector(".viz-root"); if (!root || main.querySelector(".quick")) return;
+    const root = main.querySelector(".viz-root") || main.querySelector(".day-quick-host"); if (!root || main.querySelector(".quick")) return;
     const D0 = IDX.days[0]; if (!D0) return;
     let D; try { D = cache[D0.date] || await getJSON(`data/${D0.date}.json`); } catch (e) { return; }
     const recent = new Date(D0.date); recent.setDate(recent.getDate() - 2);

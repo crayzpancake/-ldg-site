@@ -75,10 +75,18 @@
   const MK = { add: "▲加", cut: "▼减", swing: "🔄T", new: "🆕新", clear: "❌清" };
   async function mock(host, p) {
     const k = p.mock, codes = [k.yh.q, ...k.a.map(r => r.q), ...k.hk.map(r => r.q)];
-    let Q = {}, t = "";
-    try { const j = await fetch("/api/quote?s=" + codes.join(","), { cache: "no-store" }).then(r => r.json()); Q = j.q || {}; } catch (e) {}
+    let QC = {}; try { QC = JSON.parse(localStorage.getItem("ldg_qcache") || "{}"); } catch (e) {}
+    const hasCache = codes.some(c => QC[c] && QC[c].px > 0);
+    if (hasCache) drawMock(host, p, QC, "cache");
+    let Q = {};
+    try { const j = await fetch("/api/quote?s=" + codes.join(","), { cache: "no-store" }).then(r => r.json()); Q = j.q || {}; if (Object.keys(Q).length) { try { const c = JSON.parse(localStorage.getItem("ldg_qcache") || "{}"); Object.assign(c, Q); localStorage.setItem("ldg_qcache", JSON.stringify(c)); } catch (e) {} } } catch (e) {}
+    if (Object.keys(Q).length) drawMock(host, p, Q, "live"); else if (!hasCache) drawMock(host, p, {}, "fail");
+  }
+  function drawMock(host, p, Q, mode) {
+    const k = p.mock;
+    let t = "";
     const px = r => { const q = Q[r.q]; if (q && q.px > 0) { t = t || q.t; return q.px; } return r.p0; };
-    const live = Object.keys(Q).length > 0;
+    const live = mode === "live";
     let smv = 0;
     const A = k.a.map(r => { const p1 = px(r), mv = r.s * p1, pl = mv - r.s * r.cost; smv += mv;
       return { ...r, p: p1, mv, pl, pct: r.cost > 0 ? pl / (r.s * r.cost) * 100 : null }; }).sort((a, b) => b.mv - a.mv);
@@ -98,7 +106,7 @@
     const cs = {}; [...A, ...H].forEach(r => { const c = CAT[r.name] || "其他"; cs[c] = (cs[c] || 0) + r.mv; }); cs["现金(仙晶)"] = k.xj * 1e4;
     const catHTML = Object.keys(OCT).map(c => { const v = (cs[c] || 0) / total * 100, d = v - OCT[c]; return `<div><span>${c}</span><b>${v.toFixed(1)}%</b><i class="${d >= 0 ? "u" : "d"}">${d >= 0 ? "▲" : "▼"}${Math.abs(d).toFixed(1)}</i></div>`; }).join("");
     const chg = [...k.a, ...k.hk].filter(r => r.m).map(r => `${MK[r.m]} ${r.name}：${r.w}`);
-    host.innerHTML = `<div class="mk-wrap"><div class="mk-cap">↓ 按交易软件截图样式还原的<b>实时预测持仓</b>（${live ? "实时行情 " + esc(t) : "行情获取失败，暂用10/30收盘价"}）· 黄底=本月有变动 · 点表格放大</div>
+    host.innerHTML = `<div class="mk-wrap"><div class="mk-cap">↓ 按交易软件截图样式还原的<b>实时预测持仓</b>（${mode === "live" ? "实时行情 " + esc(t) : mode === "cache" ? "先按上次价格显示（" + esc(t) + "）· 正在刷新" : "行情获取失败，暂用10/30收盘价"}）· 黄底=本月有变动 · 点表格放大</div>
       <div class="mk-scroll"><div class="mk">
        <div class="mk-tab">人民币</div>
        <div class="mk-sum"><div><span>资金余额</span><b>${f(cash, 2)}</b><span>可取金额</span><b>${f(cash, 2)}</b><em>预测更新:${p.asof}</em></div>
