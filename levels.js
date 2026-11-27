@@ -153,7 +153,7 @@
     const hits = hitList.length;
     const hitBar = hits ? `<div class="lv-hits">🔔 <b>已到他提过的价位（${hits} 个）</b>：${hitList.map(h => `${esc(h.name)}「${esc(h.a)} ${h.p}${h.unit === "元/克" ? " 元/克" : " 元"}」，现价 ${f2(h.px, h.unit)} 已${h.k === "buy" ? "在其下" : "在其上"}`).join("；")}</div>` : "";
     const rk = [];
-    L.forEach(x => { const q = Q[x.code]; if (!q || !(q.px > 0)) return; (x.lv || []).forEach(v => { const dist = v.k === "buy" ? (q.px - v.p) / v.p * 100 : (v.p - q.px) / v.p * 100; rk.push({ name: x.name, a: v.a, p: v.p, unit: x.unit, k: v.k, px: q.px, dist }); }); });
+    L.forEach(x => { const q = Q[x.code]; if (!q || !(q.px > 0)) return; (x.lv || []).forEach(v => { const dist = v.k === "buy" ? (q.px - v.p) / q.px * 100 : (v.p - q.px) / q.px * 100; rk.push({ name: x.name, a: v.a, p: v.p, unit: x.unit, k: v.k, px: q.px, dist }); }); });
     rk.sort((a, b) => a.dist - b.dist);
     const rankBar = rk.length ? `<div class="lv-rank"><div class="lv-rank-h">🏁 离他的价位最近的 <small>按现价还要走多远排序；红底 = 只差 3% 以内，贴线了</small></div>${rk.slice(0, 8).map((r, i) => `<div class="lv-rank-r${r.dist <= 3 ? " hot" : ""}"><span class="lv-rank-n">${i + 1}</span><b>${esc(r.name)}</b><span class="tag ${r.k}">${esc(r.a)} ${r.p}${r.unit === "元/克" ? " 元/克" : " 元"}</span><span class="lv-rank-d">${r.dist <= 0 ? "已到价" : (r.k === "buy" ? `还要跌 ${r.dist.toFixed(1)}%` : `还要涨 ${r.dist.toFixed(1)}%`)}</span><span class="lv-rank-p">现价 ${f2(r.px, r.unit)}</span></div>`).join("")}</div>` : "";
     const t = at ? new Date(at) : null;
